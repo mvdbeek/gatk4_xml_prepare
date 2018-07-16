@@ -1,0 +1,9 @@
+{
+  "summary": "Annotations for strand artifact filter (SA_POST_PROB, SA_MAP_AF)",
+  "arguments": [],
+  "description": "Annotations for strand artifact filter calculated by a Bayesian model described in \u003ca href\u003d\u0027https://github.com/broadinstitute/gatk/tree/master/docs/mutect/mutect.pdf\u0027 target\u003d\u0027_blank\u0027\u003ehttps://github.com/broadinstitute/gatk/tree/master/docs/mutect/mutect.pdf\u003c/a\u003e.\n\n \u003cp\u003eOutput consists of two three-element arrays.  The elements of SA_POST_PROB are, respectively, the posterior probabilities that there exists an artifact on the forward strand, an artifact on the reverse strand, or no artifact.\n These probabilities are normalized to sum to 1.  The elements of SA_MAP_AF are the max a posteriori estimates of the variant allele fraction given a\n forward strand artifact, a reverse strand artifact, and no artifact, respectively.  For example SA_POST_PROB \u003d 0.9, 0.02, 0.08 and\n SA_MAP_AF \u003d 0.01, 0.1, 0.2 together mean that the apparent variant is most likely a forward strand artifact, but if it is actually a true\n variant its allele fraction is most likely 0.2.\u003c/p\u003e",
+  "name": "StrandArtifact",
+  "group": "Variant Annotations",
+  "beta": false,
+  "experimental": false
+}

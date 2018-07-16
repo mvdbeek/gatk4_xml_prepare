@@ -1,0 +1,265 @@
+{
+  "summary": "Make a panel of normals for use with Mutect2",
+  "arguments": [
+    {
+      "summary": "read one or more arguments files and add them to the command line",
+      "name": "--arguments_file",
+      "synonyms": "NA",
+      "type": "List[File]",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "[]",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "optional",
+      "options": []
+    },
+    {
+      "summary": "How to handle duplicate samples: THROW_ERROR to fail, CHOOSE_FIRST to use the first vcf with each sample name, ALLOW_ALL to use all samples regardless of duplicate sample names.",
+      "name": "--duplicate-sample-strategy",
+      "synonyms": "NA",
+      "type": "DuplicateSampleStrategy",
+      "required": "no",
+      "fulltext": "How to handle duplicate samples: THROW_ERROR to fail, CHOOSE_FIRST to use the first vcf with each sample name, ALLOW_ALL to use all samples regardless of duplicate sample names.\"",
+      "defaultValue": "THROW_ERROR",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "optional",
+      "options": [
+        {
+          "summary": "",
+          "name": "THROW_ERROR"
+        },
+        {
+          "summary": "",
+          "name": "CHOOSE_FIRST"
+        },
+        {
+          "summary": "",
+          "name": "ALLOW_ALL"
+        }
+      ]
+    },
+    {
+      "summary": "A configuration file to use with the GATK.",
+      "name": "--gatk-config-file",
+      "synonyms": "NA",
+      "type": "String",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "null",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "common",
+      "options": []
+    },
+    {
+      "summary": "If the GCS bucket channel errors out, how many times it will attempt to re-initiate the connection",
+      "name": "--gcs-max-retries",
+      "synonyms": "-gcs-retries",
+      "type": "int",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "20",
+      "minValue": "-Infinity",
+      "maxValue": "Infinity",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "optional",
+      "options": []
+    },
+    {
+      "summary": "display the help message",
+      "name": "--help",
+      "synonyms": "-h",
+      "type": "boolean",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "false",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "optional",
+      "options": []
+    },
+    {
+      "summary": "Number of samples containing a variant site required to include it in the panel of normals.",
+      "name": "--min-sample-count",
+      "synonyms": "NA",
+      "type": "int",
+      "required": "no",
+      "fulltext": "Number of samples containing a variant site required to include it in the panel of normals.",
+      "defaultValue": "2",
+      "minValue": "-Infinity",
+      "maxValue": "Infinity",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "optional",
+      "options": []
+    },
+    {
+      "summary": "Output vcf",
+      "name": "--output",
+      "synonyms": "-O",
+      "type": "File",
+      "required": "yes",
+      "fulltext": "",
+      "defaultValue": "null",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "required",
+      "options": []
+    },
+    {
+      "summary": "Whether to suppress job-summary info on System.err.",
+      "name": "--QUIET",
+      "synonyms": "NA",
+      "type": "Boolean",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "false",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "common",
+      "options": []
+    },
+    {
+      "summary": "display hidden arguments",
+      "name": "--showHidden",
+      "synonyms": "-showHidden",
+      "type": "boolean",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "false",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "advanced",
+      "options": []
+    },
+    {
+      "summary": "Undocumented option",
+      "name": "--TMP_DIR",
+      "synonyms": "NA",
+      "type": "List[File]",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "[]",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "common",
+      "options": []
+    },
+    {
+      "summary": "Whether to use the JdkDeflater (as opposed to IntelDeflater)",
+      "name": "--use-jdk-deflater",
+      "synonyms": "-jdk-deflater",
+      "type": "boolean",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "false",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "common",
+      "options": []
+    },
+    {
+      "summary": "Whether to use the JdkInflater (as opposed to IntelInflater)",
+      "name": "--use-jdk-inflater",
+      "synonyms": "-jdk-inflater",
+      "type": "boolean",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "false",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "common",
+      "options": []
+    },
+    {
+      "summary": "VCFs for samples to include. May be specified either one at a time, or as one or more .args file containing multiple VCFs, one per line.",
+      "name": "--vcfs",
+      "synonyms": "-vcfs",
+      "type": "Set[File]",
+      "required": "yes",
+      "fulltext": "The VCFs can be input as either one or more .args file(s) containing one VCF per line, or VCFs can be\n specified explicitly on the command line.",
+      "defaultValue": "[]",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "required",
+      "options": []
+    },
+    {
+      "summary": "Control verbosity of logging.",
+      "name": "--verbosity",
+      "synonyms": "-verbosity",
+      "type": "LogLevel",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "INFO",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "common",
+      "options": [
+        {
+          "summary": "",
+          "name": "ERROR"
+        },
+        {
+          "summary": "",
+          "name": "WARNING"
+        },
+        {
+          "summary": "",
+          "name": "INFO"
+        },
+        {
+          "summary": "",
+          "name": "DEBUG"
+        }
+      ]
+    },
+    {
+      "summary": "display the version number for this tool",
+      "name": "--version",
+      "synonyms": "NA",
+      "type": "boolean",
+      "required": "no",
+      "fulltext": "",
+      "defaultValue": "false",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "optional",
+      "options": []
+    }
+  ],
+  "description": "Create a panel of normals (PoN) containing germline and artifactual sites for use with Mutect2.\n\n \u003cp\u003e\n     The tool takes multiple normal sample callsets produced by Mutect2\u0027s tumor-only mode and collates sites present in two or more samples\n     into a sites-only VCF. The PoN captures common artifactual and germline variant sites.\n     Mutect2 then uses the PoN to filter variants at the site-level.\n \u003c/p\u003e\n \u003cp\u003e\n     This tool is featured in the Somatic Short Mutation calling Best Practice Workflow.\n     See \u003ca href\u003d\"https://software.broadinstitute.org/gatk/documentation/article?id\u003d11136\"\u003eTutorial#11136\u003c/a\u003e for a\n     step-by-step description of the workflow and \u003ca href\u003d\"https://software.broadinstitute.org/gatk/documentation/article?id\u003d11127\"\u003eArticle#11127\u003c/a\u003e\n     for an overview of what traditional somatic calling entails. For the latest pipeline scripts, see the\n     \u003ca href\u003d\"https://github.com/broadinstitute/gatk/tree/master/scripts/mutect2_wdl\"\u003eMutect2 WDL scripts directory\u003c/a\u003e.\n \u003c/p\u003e\n \u003ch3\u003eExample workflow\u003c/h3\u003e\n\n \u003ch4\u003eStep 1. Run Mutect2 in tumor-only mode for each normal sample.\u003c/h4\u003e\n \u003cpre\u003e\n gatk Mutect2 \\\n   -R reference.fa \\\n   -I normal1.bam \\\n   -tumor normal1_sample_name \\\n   -O normal1_for_pon.vcf.gz\n \u003c/pre\u003e\n\n \u003ch4\u003eStep 2. Create a file ending with .args or .list extension with the paths to the VCFs from step 1, one per line.\u003c/h4\u003e\n \u003cp\u003eThis approach is optional. Other extensions will error the run. \u003c/p\u003e\n\n \u003cpre\u003e\n     normal1_for_pon.vcf.gz\n     normal2_for_pon.vcf.gz\n     normal3_for_pon.vcf.gz\n \u003c/pre\u003e\n\n \u003ch4\u003eStep 3. Combine the normal calls using CreateSomaticPanelOfNormals.\u003c/h4\u003e\n\n \u003cpre\u003e\n gatk CreateSomaticPanelOfNormals \\\n   -vcfs normals_for_pon_vcf.args \\\n   -O pon.vcf.gz\n \u003c/pre\u003e\n\n \u003cp\u003eThe tool also accepts multiple .args files. Pass each in with the -vcfs option.\n Alternatively, provide each normal\u0027s VCF as separate arguments.\u003c/p\u003e\n \u003cpre\u003e\n gatk CreateSomaticPanelOfNormals \\\n   -vcfs normal1_for_pon_vcf.gz \\\n   -vcfs normal2_for_pon_vcf.gz \\\n   -vcfs normal3_for_pon_vcf.gz \\\n   -O pon.vcf.gz\n \u003c/pre\u003e\n\n \u003cp\u003eThe resulting VCF will be an eight-column sites-only VCF lacking annotations.\u003c/p\u003e\n\n \u003cp\u003eBy default the tool fails if multiple vcfs have the same sample name, but the --duplicate-sample-strategy argument can be changed to\n  ALLOW_ALL to allow duplicates or CHOOSE_FIRST to use only the first vcf with a given sample name.\u003c/p\u003e",
+  "name": "CreateSomaticPanelOfNormals",
+  "group": "Variant Filtering",
+  "beta": true,
+  "experimental": false
+}

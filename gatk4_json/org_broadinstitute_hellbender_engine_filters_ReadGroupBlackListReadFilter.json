@@ -1,0 +1,25 @@
+{
+  "summary": "Keep records not matching the read group tag and exact match string.",
+  "arguments": [
+    {
+      "summary": "The name of the read group to filter out",
+      "name": "--read-group-black-list",
+      "synonyms": "NA",
+      "type": "List[String]",
+      "required": "yes",
+      "fulltext": "",
+      "defaultValue": "[]",
+      "minValue": "NA",
+      "maxValue": "NA",
+      "minRecValue": "NA",
+      "maxRecValue": "NA",
+      "kind": "required",
+      "options": []
+    }
+  ],
+  "description": "Keep records not matching the read group tag and exact match string.\n\n \u003cp\u003eFor example, this filter value:\n   \u003ccode\u003ePU:1000G-mpimg-080821-1_1\u003c/code\u003e\n would filter out a read with the read group PU:1000G-mpimg-080821-1_1\u003c/p\u003e",
+  "name": "ReadGroupBlackListReadFilter",
+  "group": "Read Filters",
+  "beta": false,
+  "experimental": false
+}
