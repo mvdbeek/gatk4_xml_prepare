@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 from collections import OrderedDict
 from string import Template
@@ -358,7 +358,7 @@ class JsonShell(object):
                                 ('inputs_close', Template('\t</inputs>\n')),
                                 ('outputs', Template('\t<outputs>\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')),
                                 ('tests', Template('\t<tests>\n\t</tests>\n')),
-                                ('help', Template('\t<help><![CDATA[\n\t$summary\n\t@PICARD_HELP@\n\t]]></help>\n')),
+                                ('help', Template('\t<help><![CDATA[\n\t$summary\n\t]]></help>\n')),
                                 ('citations', Template('\t<expand macro="citations"/>\n')),
                                 ('tool_close', Template('</tool>'))])
 
