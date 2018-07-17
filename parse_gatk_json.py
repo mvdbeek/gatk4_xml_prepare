@@ -36,13 +36,14 @@ class JsonXml(object):
       "kind": "optional",
       "options": []
     """
-    def __init__(self, blob):
+    def __init__(self, blob, json_type=None):
         """
         :param blob:
         """
         self.blob = blob
         self.type = blob['type']
         self.section = blob['kind']
+        self.in_frmt = self.json_type_map(json_type)
         self.xml_out = self.reblob()
         self.xml_write = self.template_xml()
         self.xml_param_out = []
@@ -62,7 +63,7 @@ class JsonXml(object):
         templates = {'integer': Template('\t\t<param name="$name" argument="$argument" type="$type" optional="$optional" value="$value" min="$min" max="$max" label="$label" help="$help" />\n'),
                      'float': Template('\t\t<param name="$name" argument="$argument" type="$type" optional="$optional" value="$value" min="$min" max="$max" label="$label" help="$help" />\n'),
                      'text': Template('\t\t<param name="$name" argument="$argument" type="$type" optional="$optional" value="$value" label="$label" help="$help" />\n'),
-                     'data': Template('\t\t<param name="$name" argument="$argument" type="$type" optional="$optional" format="" label="$label" help="$help" />\n'),
+                     'data': Template('\t\t<param name="$name" argument="$argument" type="$type" optional="$optional" format="$format" label="$label" help="$help" />\n'),
                      'select': Template('\t\t<param name="$name" argument="$argument" type="$type" optional="$optional" label="$label" help="$help" >\n'),
                      'boolean': Template('\t\t<param name="$name" argument="$argument" type="$type" truevalue="$truevalue" falsevalue="$falsevalue" optional="$optional" checked="$checked" label="$label" help="$help" />\n')}
         try:
@@ -103,6 +104,7 @@ class JsonXml(object):
                    'label': self.blob['name'].lstrip('-').replace('-', ' ').title(),
                    'optional': self.xml_json_req_map(self.blob['required']),
                    'value': self.blob['defaultValue'],
+                   'format': '',
                    'truevalue': self.blob['name'],
                    'falsevalue': '',
                    'checked': self.blob['defaultValue'],
@@ -110,7 +112,21 @@ class JsonXml(object):
                    'min': self.xml_json_num_map(self.blob['minValue']),
                    'help': self.blob['summary'],
                    'section': self.section}
+
+        if self.in_frmt:
+            xml_out['format'] = self.in_frmt
         return xml_out
+
+    def json_type_map(self, json_type):
+        """
+        Map types, as supplied with json_type argument, to the format they will be.
+        :return:
+        """
+        json_type_map = {'picard_vcf': 'vcf,vcf_bgzip'}
+        try:
+            return json_type_map[json_type]
+        except:
+            return None
 
     def get_select_opts(self):
         """
@@ -230,7 +246,7 @@ class JsonShell(object):
     description == help
     name == name
     """
-    def __init__(self, filename, picard=True, profile='17.09'):
+    def __init__(self, filename, json_type, picard=True, profile='17.09'):
         """
 
         """
@@ -287,7 +303,7 @@ class JsonShell(object):
                 self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
             for section in self.sectional_params:
                 section_template = {'name': section, 'label': section.title()}
-                self.xml_params.append(Template('\t\t<section name="$name" label="$label Parameters" expanded="False">\n').substitute(section_template))
+                self.xml_params.append(Template('\t\t<section name="$name" title="$label Parameters" expanded="False">\n').substitute(section_template))
                 self.xml_params.extend(self.sectional_params[section])
                 self.xml_params.append('\t\t</section>\n')
 
@@ -320,7 +336,7 @@ class JsonShell(object):
         This will house all values the templates need.
         :return:
         """
-        shell_dict = {'id': self.json_file['name'],
+        shell_dict = {'id': self.json_file['name'].lower(),
                       'name': self.json_file['name'],
                       'short_name': self.json_file['name'].split(' ')[0],
                       'profile': self.profile,
@@ -333,7 +349,7 @@ class JsonShell(object):
         Provide templates for the shell of the XML file.
         :return:
         """
-        shell_tmpl = OrderedDict([('tool', Template('<?xml version="1.0"?>\n<tool id="gatk4_$id" name="GATK4: $name" version="@WRAPPER_VERSION@0" profile="$profile">\n')),
+        shell_tmpl = OrderedDict([('tool', Template('<?xml version="1.0"?>\n<tool id="gatk4_$id" name="GATK4 $name" version="@WRAPPER_VERSION@0" profile="$profile">\n')),
                                 ('description', Template('\t<description>- $description</description>\n')),
                                 ('macros', ''),
                                 ('expand', Template('\t<expand macro="requirements"/>\n\t<expand macro="version_cmd"/>\n')),
@@ -368,7 +384,7 @@ def main():
     :return:
     """
     args = supply_args()
-    myshell = JsonShell(args.json, args.picard)
+    myshell = JsonShell(args.json, args.json_type, args.picard)
     myshell.get_shell(args.xml_out)
 
 if __name__ == "__main__":
