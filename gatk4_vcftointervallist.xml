@@ -1,0 +1,66 @@
+<tool id="gatk4_vcftointervallist" name="VcfToIntervalList (Picard)" version="@VERSION@.0" profile="17.09">
+
+	<description>- Converts a VCF or BCF file to a Picard Interval List</description>
+
+	<macros>
+		<import>macros.xml</import>
+		<import>picard_macros.xml</import>
+	</macros>
+
+	<expand macro="requirements"/>
+	<expand macro="version_cmd"/>
+
+	<command detect_errors="exit_code"><![CDATA[
+		@CMD_BEGIN@ VcfToIntervalList
+		#include source=$picard_ref_opts#
+		#include source=$picard_opts#
+		#include source=$picard_output_opts#
+	]]></command>
+
+	<inputs>/>
+		<param argument="--INCLUDE_FILTERED" truevalue="--INCLUDE_FILTERED" falsevalue="" type="boolean" optional="true" checked="false" label="Include Filtered" help="Include variants that were filtered in the output interval list." />
+		<param argument="--INPUT" type="data" optional="false" format="" label="Input" help="The BCF or VCF input file. The file format is determined by file extension." />
+		<expand macro="gatk_req_params" />
+		<expand macro="picard_params"
+	</inputs>
+
+	<outputs>
+		<expand macro="picard_output_params" />
+	</outputs>
+
+	<tests>
+	</tests>
+
+	<help><![CDATA[
+	Converts a VCF or BCF file to a Picard Interval List.
+
+ <p>This tool creates a Picard Interval List from a VCF or BCF. It is important
+ that the file extension is included as the file format is determined by the file
+ extension. Variants that were filtered can be included in the output interval list by
+ setting INCLUDE_FILTERED to true. </p>
+
+ <h3>Inputs</h3>
+ <ul>
+     <li> A BCF or VCF input file  </li>
+     <li> Boolean if variants that were filtered should be included in the output interval list </li>
+ </ul>
+
+ <h3>Output</h3>
+ <ul>
+ A Picard Interval List
+ </ul>
+
+ <p>
+ <h4>Usage example:</h4>
+ <pre>
+     java -jar picard.jar VcfToIntervalList \
+          I=input_variants.vcf \
+          O=output.interval_list
+ </pre>
+ </p>
+	@PICARD_HELP@
+	]]></help>
+
+	<expand macro="citations"/>
+
+</tool>
