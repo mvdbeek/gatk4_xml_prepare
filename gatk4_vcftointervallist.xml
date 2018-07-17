@@ -19,7 +19,7 @@
 
 	<inputs>/>
 		<param argument="--INCLUDE_FILTERED" truevalue="--INCLUDE_FILTERED" falsevalue="" type="boolean" optional="true" checked="false" label="Include Filtered" help="Include variants that were filtered in the output interval list." />
-		<param argument="--INPUT" type="data" optional="false" format="" label="Input" help="The BCF or VCF input file. The file format is determined by file extension." />
+		<param argument="--INPUT" type="data" optional="false" format="vcf,vcf_bgzip" label="Input" help="The BCF or VCF input file. The file format is determined by file extension." />
 		<expand macro="gatk_req_params" />
 		<expand macro="picard_params"
 	</inputs>

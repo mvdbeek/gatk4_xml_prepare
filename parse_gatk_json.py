@@ -9,8 +9,9 @@ VERSION="0.1.0"
 
 def supply_args():
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('json', help='Input JSON')
-    parser.add_argument('xml_out', help='Output XML')
+    parser.add_argument('--json', help='Input JSON')
+    parser.add_argument('--json_type', choices=['picard_vcf'], help='Pass the type of file we are working with, so format tag can be filled.')
+    parser.add_argument('--xml_out', help='Output XML')
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     args = parser.parse_args()
     return args
@@ -33,12 +34,13 @@ class JsonXml(object):
       "kind": "optional",
       "options": []
     """
-    def __init__(self, blob):
+    def __init__(self, blob, json_type=None):
         """
         :param blob:
         """
         self.blob = blob
         self.type = blob['type']
+        self.in_frmt = self.json_type_map(json_type)
         self.xml_out = self.reblob()
         self.xml_write = self.template_xml()
         self.xml_param_out = []
@@ -57,7 +59,7 @@ class JsonXml(object):
         templates = {'integer': Template('\t\t<param argument="$argument" type="$type" optional="$optional" value="$value" min="$min" max="$max" label="$label" help="$help" />\n'),
                      'float': Template('\t\t<param argument="$argument" type="$type" optional="$optional" value="$value" min="$min" max="$max" label="$label" help="$help" />\n'),
                      'text': Template('\t\t<param argument="$argument" type="$type" optional="$optional" value="$value" label="$label" help="$help" />\n'),
-                     'data': Template('\t\t<param argument="$argument" type="$type" optional="$optional" format="" label="$label" help="$help" />\n'),
+                     'data': Template('\t\t<param argument="$argument" type="$type" optional="$optional" format="$format" label="$label" help="$help" />\n'),
                      'select': Template('\t\t<param argument="$argument" type="$type" optional="$optional" label="$label" help="$help" >\n'),
                      'boolean': Template('\t\t<param argument="$argument" truevalue="$truevalue" falsevalue="$falsevalue" type="$type" optional="$optional" checked="$checked" label="$label" help="$help" />\n')}
         try:
@@ -98,13 +100,28 @@ class JsonXml(object):
                    'label': self.blob['name'].lstrip('-').replace('_', ' ').title(),
                    'optional': self.xml_json_req_map(self.blob['required']),
                    'value': self.blob['defaultValue'],
+                   'format': '',
                    'truevalue': self.blob['name'],
                    'falsevalue': '',
                    'checked': self.blob['defaultValue'],
                    'max': self.xml_json_num_map(self.blob['maxValue']),
                    'min': self.xml_json_num_map(self.blob['minValue']),
                    'help': self.blob['summary']}
+
+        if self.in_frmt:
+            xml_out['format'] = self.in_frmt
         return xml_out
+
+    def json_type_map(self, json_type):
+        """
+        Map types, as supplied with json_type argument, to the format they will be.
+        :return:
+        """
+        json_type_map = {'picard_vcf': 'vcf,vcf_bgzip'}
+        try:
+            return json_type_map[json_type]
+        except:
+            return None
 
     def get_select_opts(self):
         """
@@ -211,7 +228,7 @@ class JsonShell(object):
     description == help
     name == name
     """
-    def __init__(self, filename, profile='17.09'):
+    def __init__(self, filename, json_type, profile='17.09'):
         """
 
         """
@@ -226,7 +243,7 @@ class JsonShell(object):
             self.json_file = json.load(myfile)
             for entry in self.json_file['arguments']:
                 if entry['name'] not in self.common:
-                    self.xml_params.extend(JsonXml(entry).xml_param_out)
+                    self.xml_params.extend(JsonXml(entry, json_type).xml_param_out)
                     self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
 
     def get_shell(self, outfile):
@@ -293,7 +310,7 @@ def main():
     :return:
     """
     args = supply_args()
-    myshell = JsonShell(args.json)
+    myshell = JsonShell(args.json, args.json_type)
     myshell.get_shell(args.xml_out)
 
 if __name__ == "__main__":
