@@ -2,6 +2,7 @@
 
 from collections import OrderedDict
 from string import Template
+from xml.sax.saxutils import escape
 import argparse
 import json
 import pypandoc
@@ -67,7 +68,7 @@ class JsonXml(object):
                      'select': Template('\t\t<param name="$name" argument="$argument" type="$type" optional="$optional" label="$label" help="$help" >\n'),
                      'boolean': Template('\t\t<param name="$name" argument="$argument" type="$type" truevalue="$truevalue" falsevalue="$falsevalue" optional="$optional" checked="$checked" label="$label" help="$help" />\n')}
         try:
-            return templates[self.xml_out['type']].substitute(self.xml_out)
+            return templates[self.xml_out['type']].substitute(self.xml_out).replace('max="" ', '').replace('min="" ', '')
         except:
             raise Exception('Type ' + self.xml_out['type'] + " not recognized.")
 
@@ -115,6 +116,8 @@ class JsonXml(object):
 
         if self.in_frmt:
             xml_out['format'] = self.in_frmt
+        for key in ['argument', 'checked', 'falsevalue', 'format', 'help', 'label', 'max', 'min', 'name', 'optional', 'truevalue', 'type', 'value']:
+            xml_out[key] = escape(xml_out[key], {'"': '&quot;', "'": '&apos;'})
         return xml_out
 
     def json_type_map(self, json_type):
@@ -304,9 +307,10 @@ class JsonShell(object):
                     self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
             for section in self.sectional_params:
                 section_template = {'name': section, 'label': section.title()}
-                self.xml_params.append(Template('\t\t<section name="$name" title="$label Parameters" expanded="False">\n').substitute(section_template))
-                self.xml_params.extend(self.sectional_params[section])
-                self.xml_params.append('\t\t</section>\n')
+                if self.sectional_params[section]:
+                    self.xml_params.append(Template('\t\t<section name="$name" title="$label Parameters" expanded="False">\n').substitute(section_template))
+                    self.xml_params.extend(self.sectional_params[section])
+                    self.xml_params.append('\t\t</section>\n')
 
     def get_shell(self, outfile):
         """
@@ -337,7 +341,7 @@ class JsonShell(object):
         This will house all values the templates need.
         :return:
         """
-        shell_dict = {'id': self.json_file['name'].lower(),
+        shell_dict = {'id': self.json_file['name'].lower().split(' ')[0],
                       'name': self.json_file['name'],
                       'short_name': self.json_file['name'].split(' ')[0],
                       'profile': self.profile,
@@ -357,7 +361,7 @@ class JsonShell(object):
                                 ('command', ''),
                                 ('inputs', ''),
                                 ('inputs_close', Template('\t</inputs>\n')),
-                                ('outputs', Template('\t<outputs>\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')),
+                                ('outputs', ''),
                                 ('tests', Template('\t<tests>\n\t</tests>\n')),
                                 ('help', Template('\t<help><![CDATA[\n\t$summary\n\t]]></help>\n')),
                                 ('citations', Template('\t<expand macro="citations"/>\n')),
@@ -367,11 +371,13 @@ class JsonShell(object):
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t\t<import>picard_macros.xml</import>\n\t</macros>\n')
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t\t#include source=$$picard_ref_opts#\n\t\t#include source=$$picard_opts#\n\t\t#include source=$$picard_output_opts#\n\t]]></command>\n')
             shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="gatk_req_params" />\n\t\t<expand macro="picard_params" />')
+            shell_tmpl['outputs'] = Template('\t<outputs>\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')
 
         else:
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t</macros>\n')
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t]]></command>\n')
             shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="gatk_req_params" />')
+            shell_tmpl['outputs'] = Template('\t<outputs>\n\t\t<expand macro="gatk_output_params" />\n\t</outputs>\n')
         return shell_tmpl
 
 
