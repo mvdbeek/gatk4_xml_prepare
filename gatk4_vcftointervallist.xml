@@ -13,7 +13,7 @@
 
     <command detect_errors="exit_code"><![CDATA[
         @CMD_BEGIN@ VcfToIntervalList
-        ${optional}.{include_filtered}
+        ${optional.include_filtered}
         --INPUT ${input}
         #include source=$picard_ref_opts#
         #include source=$picard_opts#

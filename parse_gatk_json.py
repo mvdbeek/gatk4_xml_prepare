@@ -228,7 +228,7 @@ class JsonCheetah(JsonXml):
         :return:
         """
         if self.xml_out['section'] not in ['required', 'common']:
-            template_string = '$argument $${$section}.{$name}'
+            template_string = '$argument $${$section.$name}'
         else:
             template_string = '$argument $${$name}'
         if self.xml_out['type'] == 'boolean':
