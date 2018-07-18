@@ -282,24 +282,30 @@ class JsonShell(object):
         self.common = ("--version", "--showHidden", "--help", "--arguments_file", "--VERBOSITY",
                        "--VALIDATION_STRINGENCY", "--USE_JDK_INFLATER", "--USE_JDK_DEFLATER", "--TMP_DIR", "--QUIET",
                        "--MAX_RECORDS_IN_RAM", "--GA4GH_CLIENT_SECRETS", "--CREATE_MD5_FILE", "--CREATE_INDEX",
-                       "--COMPRESSION_LEVEL", "--REFERENCE_SEQUENCE", "--OUTPUT")
+                       "--COMPRESSION_LEVEL", "--REFERENCE_SEQUENCE")
+        self.output_params = ("--OUTPUT")
         self.profile = profile
         self.json_type = json_type
         self.xml_params = []
+        self.out_params = []
         self.cheetah_params = []
         self.sectional_params = {'optional': [], 'advanced': []}
         with open(filename, 'rU') as myfile:
             self.json_file = json.load(myfile)
+            self.shell_dict = self.build_shell_dict()
             for entry in self.json_file['arguments']:
                 if entry['type'] not in self.known_types:
                     print('Argument type %s not recognized, skipping.' % entry['type'])
                     continue
-
-                if entry['name'] not in self.common:
+                if entry['name'] not in self.common and entry['name'] not in self.output_params:
                     if entry['kind'] not in self.sectional_params:
                         self.xml_params.extend(JsonXml(entry, self.json_type).xml_param_out)
                     else:
                         self.sectional_params[entry['kind']].extend([param.replace('\t\t', '\t\t\t') for param in JsonXml(entry, self.json_type).xml_param_out])
+                    self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
+                elif entry['name'] in self.output_params:
+                    self.my_xml = JsonXml(entry, self.json_type)
+                    self.out_params.extend(self.build_output_template())
                     self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
             for section in self.sectional_params:
                 if self.sectional_params[section]:
@@ -314,22 +320,24 @@ class JsonShell(object):
         :return:
         """
         self.handle_out = open(outfile, 'w')
-        shell_dict = self.build_shell_dict()
-        if 'cheetah_template' not in shell_dict:
-            shell_dict['cheetah_template'] = '\n\t\t'.join(self.cheetah_params)
+        if 'cheetah_template' not in self.shell_dict:
+            self.shell_dict['cheetah_template'] = '\n\t\t'.join(self.cheetah_params)
         for k, v in self.build_shell_tmpl().items():
-            self.handle_out.write(v.substitute(shell_dict).replace('\t', '    '))
+            self.handle_out.write(v.substitute(self.shell_dict).replace('\t', '    '))
             self.handle_out.write('\n')
             if k == 'inputs':
-                self.write_params()
+                self.write_params(self.xml_params)
+            elif k == 'outputs':
+                self.write_params(self.out_params)
+
         self.handle_out.close()
 
-    def write_params(self):
+    def write_params(self, to_write):
         """
         Write through the params section.
         :return:
         """
-        for entry in self.xml_params:
+        for entry in to_write:
             self.handle_out.write(entry.replace('\t', '    '))
 
     def build_shell_dict(self):
@@ -345,6 +353,26 @@ class JsonShell(object):
                       'summary': pypandoc.convert_text(self.json_file['description'], 'rst', format='html')}
         return shell_dict
 
+    def output_type_map(self, tool_name):
+        """
+        Can't determine what the format is of output files based on json alone.  This will provide the mapping of tool
+        to file type.
+        :return:
+        """
+        output_type_map = {self.shell_dict['id']: 'picard_interval_list'}
+        return output_type_map[tool_name]
+
+    def build_output_template(self):
+        """
+        Fill the template for output section.  Looks like:
+        <data format="vcf" name="output_vcf" label="${tool.name} on ${on_string}: vcf" from_work_dir="output.vcf" ></data>
+        :return:
+        """
+        out_dict = {'format': self.output_type_map(self.shell_dict['id']),
+                    'name': self.my_xml.xml_out['name']}
+        out_tmpl = Template('\t\t<data format="$format" name="$name" label="$${tool.name} on $${on_string}: $format" />')
+        return out_tmpl.substitute(out_dict)
+
     def build_shell_tmpl(self):
         """
         Provide templates for the shell of the XML file.
@@ -357,7 +385,8 @@ class JsonShell(object):
                                 ('command', None),
                                 ('inputs', None),
                                 ('inputs_close', Template('\t</inputs>\n')),
-                                ('outputs', Template('\t<outputs>\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')),
+                                ('outputs', Template('\t<outputs>')),
+                                ('outputs_close', Template('\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')),
                                 ('tests', Template('\t<tests>\n\t</tests>\n')),
                                 ('help', Template('\t<help><![CDATA[\n\t$summary\n\t]]></help>\n')),
                                 ('citations', Template('\t<expand macro="citations"/>\n')),
@@ -368,7 +397,8 @@ class JsonShell(object):
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t\t#include source=$$picard_ref_opts#\n\t\t#include source=$$picard_opts#\n\t\t#include source=$$picard_output_opts#\n\t]]></command>\n')
             shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />')
             shell_tmpl['inputs_close'] = Template('\n\t\t<expand macro="picard_params" />\n\t</inputs>\n')
-
+            if self.my_xml.xml_out['argument'] not in self.output_params:
+                shell_tmpl['outputs'] = Template('\t<outputs>\n\t\t<expand macro="picard_vcf_output_params" />\n\t\t<expand macro="picard_output_params" />')
         else:
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t</macros>\n')
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t]]></command>\n')
