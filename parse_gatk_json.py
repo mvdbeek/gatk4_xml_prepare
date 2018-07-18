@@ -302,10 +302,11 @@ class JsonShell(object):
                         self.sectional_params[entry['kind']].extend([param.replace('\t\t', '\t\t\t') for param in JsonXml(entry, self.json_type).xml_param_out])
                     self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
             for section in self.sectional_params:
-                section_template = {'name': section, 'label': section.title()}
-                self.xml_params.append(Template('\t\t<section name="$name" title="$label Parameters" expanded="False">\n').substitute(section_template))
-                self.xml_params.extend(self.sectional_params[section])
-                self.xml_params.append('\t\t</section>\n')
+                if self.sectional_params[section]:
+                    section_template = {'name': section, 'label': section.title()}
+                    self.xml_params.append(Template('\t\t<section name="$name" title="$label Parameters" expanded="False">\n').substitute(section_template))
+                    self.xml_params.extend(self.sectional_params[section])
+                    self.xml_params.append('\t\t</section>\n')
 
     def get_shell(self, outfile):
         """

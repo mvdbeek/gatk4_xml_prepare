@@ -27,8 +27,6 @@
         <section name="optional" title="Optional Parameters" expanded="False">
             <param name="include_filtered" argument="--INCLUDE_FILTERED" type="boolean" truevalue="--INCLUDE_FILTERED" falsevalue="" optional="true" checked="false" label="Include_Filtered" help="Include variants that were filtered in the output interval list." />
         </section>
-        <section name="advanced" title="Advanced Parameters" expanded="False">
-        </section>
     </inputs>
 
     <outputs>
