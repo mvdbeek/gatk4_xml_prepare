@@ -2,6 +2,7 @@
 
 from collections import OrderedDict
 from string import Template
+from xml.sax.saxutils import escape
 import argparse
 import json
 import pypandoc
@@ -66,7 +67,7 @@ class JsonXml(object):
                      'select': Template('\t\t<param name="$name" argument="$argument" type="$type" optional="$optional" label="$label" help="$help" >\n'),
                      'boolean': Template('\t\t<param name="$name" argument="$argument" type="$type" truevalue="$truevalue" falsevalue="$falsevalue" optional="$optional" checked="$checked" label="$label" help="$help" />\n')}
         try:
-            return templates[self.xml_out['type']].substitute(self.xml_out)
+            return templates[self.xml_out['type']].substitute(self.xml_out).replace('max="" ', '').replace('min="" ', '')
         except:
             raise Exception('Type ' + self.xml_out['type'] + " not recognized.")
 
@@ -114,6 +115,8 @@ class JsonXml(object):
 
         if self.in_frmt:
             xml_out['format'] = self.in_frmt
+        for key in ['argument', 'checked', 'falsevalue', 'format', 'help', 'label', 'max', 'min', 'name', 'optional', 'truevalue', 'type', 'value']:
+            xml_out[key] = escape(xml_out[key], {'"': '&quot;', "'": '&apos;'})
         return xml_out
 
     def json_type_map(self, json_type):
@@ -385,7 +388,7 @@ class JsonShell(object):
                                 ('command', None),
                                 ('inputs', None),
                                 ('inputs_close', Template('\t</inputs>\n')),
-                                ('outputs', Template('\t<outputs>')),
+                                ('outputs', None),
                                 ('outputs_close', Template('\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')),
                                 ('tests', Template('\t<tests>\n\t</tests>\n')),
                                 ('help', Template('\t<help><![CDATA[\n\t$summary\n\t]]></help>\n')),
@@ -402,7 +405,8 @@ class JsonShell(object):
         else:
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t</macros>\n')
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t]]></command>\n')
-            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />')
+            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="gatk_req_params" />')
+            shell_tmpl['outputs'] = Template('\t<outputs>\n\t\t<expand macro="gatk_output_params" />\n\t</outputs>\n')
         return shell_tmpl
 
 

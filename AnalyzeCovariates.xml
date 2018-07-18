@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<tool id="gatk4_analyzecovariates" name="GATK4 AnalyzeCovariates" version="@WRAPPER_VERSION@0" profile="17.09">
+
+    <description>- Evaluate and compare base quality score recalibration (BQSR) tables</description>
+
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+
+    <expand macro="requirements"/>
+    <expand macro="version_cmd"/>
+
+    <command detect_errors="exit_code"><![CDATA[
+        @CMD_BEGIN@ AnalyzeCovariates
+        --after-report-file ${optional.after_report_file}
+        --before-report-file ${optional.before_report_file}
+        --bqsr-recal-file ${optional.bqsr_recal_file}
+        --gatk-config-file ${gatk_config_file}
+        --gcs-max-retries ${optional.gcs_max_retries}
+        ${optional.ignore_last_modification_times}
+        --intermediate-csv-file ${optional.intermediate_csv_file}
+        --plots-report-file ${optional.plots_report_file}
+        ${use_jdk_deflater}
+        ${use_jdk_inflater}
+        --verbosity ${verbosity}
+    ]]></command>
+
+    <inputs>
+        <expand macro="gatk_req_params" />
+        <param name="gatk_config_file" argument="--gatk-config-file" type="text" optional="true" value="null" label="Gatk Config File" help="A configuration file to use with the GATK." />
+        <param name="use_jdk_deflater" argument="--use-jdk-deflater" type="boolean" truevalue="--use-jdk-deflater" falsevalue="" optional="true" checked="false" label="Use Jdk Deflater" help="Whether to use the JdkDeflater (as opposed to IntelDeflater)" />
+        <param name="use_jdk_inflater" argument="--use-jdk-inflater" type="boolean" truevalue="--use-jdk-inflater" falsevalue="" optional="true" checked="false" label="Use Jdk Inflater" help="Whether to use the JdkInflater (as opposed to IntelInflater)" />
+        <param name="verbosity" argument="--verbosity" type="select" optional="true" label="Verbosity" help="Control verbosity of logging." >
+            <option value="ERROR" selected="false">ERROR</option>
+            <option value="WARNING" selected="false">WARNING</option>
+            <option value="INFO" selected="true">INFO</option>
+            <option value="DEBUG" selected="false">DEBUG</option>
+        </param>
+        <section name="optional" title="Optional Parameters" expanded="False">
+            <param name="after_report_file" argument="--after-report-file" type="data" optional="true" format="" label="After Report File" help="file containing the BQSR second-pass report file" />
+            <param name="before_report_file" argument="--before-report-file" type="data" optional="true" format="" label="Before Report File" help="file containing the BQSR first-pass report file" />
+            <param name="bqsr_recal_file" argument="--bqsr-recal-file" type="data" optional="true" format="" label="Bqsr Recal File" help="Input covariates table file for on-the-fly base quality score recalibration" />
+            <param name="gcs_max_retries" argument="--gcs-max-retries" type="integer" optional="true" value="20" label="Gcs Max Retries" help="If the GCS bucket channel errors out, how many times it will attempt to re-initiate the connection" />
+            <param name="ignore_last_modification_times" argument="--ignore-last-modification-times" type="boolean" truevalue="--ignore-last-modification-times" falsevalue="" optional="true" checked="false" label="Ignore Last Modification Times" help="do not emit warning messages related to suspicious last modification time order of inputs" />
+            <param name="intermediate_csv_file" argument="--intermediate-csv-file" type="data" optional="true" format="" label="Intermediate Csv File" help="location of the csv intermediate file" />
+            <param name="plots_report_file" argument="--plots-report-file" type="data" optional="true" format="" label="Plots Report File" help="location of the output report" />
+        </section>
+    </inputs>
+
+    <outputs>
+        <expand macro="gatk_output_params" />
+    </outputs>
+
+    <tests>
+    </tests>
+
+    <help><![CDATA[
+    Evaluate and compare base quality score recalibration tables
+
+This tool generates plots to assess the quality of a recalibration run
+as part of the Base Quality Score Recalibration (BQSR) procedure.
+
+Summary of the BQSR procedure
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The goal of this procedure is to correct for systematic bias that
+affects the assignment of base quality scores by the sequencer. The
+first pass consists of calculating error empirically and finding
+patterns in how error varies with basecall features over all bases. The
+relevant observations are written to a recalibration table. The second
+pass consists of applying numerical corrections to each individual
+basecall based on the patterns identified in the first step (recorded in
+the recalibration table) and writing out the recalibrated data to a new
+BAM or CRAM file.
+
+Inputs
+~~~~~~
+
+The tool can take up to three different sets of recalibration tables.
+The resulting plots will be overlaid on top of each other to make
+comparisons easy.
+
++----------------+------------+----------+-----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Set            | Argument   | Label    | Color     | Description                                                                                                                                                                                 |
++================+============+==========+===========+=============================================================================================================================================================================================+
+| Original       | -before    | BEFORE   | Maroon1   | First pass recalibration tables obtained from applying org.broadinstitute.hellbender.transformers.BQSRReadTransformer on the original alignment.                                            |
++----------------+------------+----------+-----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Recalibrated   | -after     | AFTER    | Blue      | Second pass recalibration tables results from the application of org.broadinstitute.hellbender.transformers.BQSRReadTransformer on the alignment recalibrated using the first pass tables   |
++----------------+------------+----------+-----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Input          | -bqsr      | BQSR     | Black     | Any recalibration table without a specific role                                                                                                                                             |
++----------------+------------+----------+-----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+| 
+
+You need to specify at least one set. Multiple sets need to have the
+same values for the following parameters:
+
+*covariate (order is not important), no\_standard\_covs,
+run\_without\_dbsnp, solid\_recal\_mode, solid\_nocall\_strategy,
+mismatches\_context\_size, mismatches\_default\_quality,
+deletions\_default\_quality, insertions\_default\_quality,
+maximum\_cycle\_value, low\_quality\_tail, default\_platform,
+force\_platform, quantizing\_levels* and *binary\_tag\_name*
+
+Outputs
+~~~~~~~
+
+Currently this tool generates two outputs:
+
+-plots *my-report.pdf*
+    A pdf document that encloses plots to assess the quality of the
+    recalibration
+-csv *my-report.csv*
+    A csv file that contains a table with all the data required to
+    generate those plots
+
+You need to specify at least one of them.
+
+Usage examples
+~~~~~~~~~~~~~~
+
+Plot a single recalibration table
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+       gatk AnalyzeCovariates \
+         -bqsr recal1.table \
+         -plots AnalyzeCovariates.pdf
+     
+
+Plot "before" (first pass) and "after" (second pass) recalibration tables to compare them
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+       gatk AnalyzeCovariates \
+         -before recal1.table \
+         -after recal2.table \
+         -plots AnalyzeCovariates.pdf
+     
+
+Plot up to three recalibration tables for comparison
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+       gatk AnalyzeCovariates \
+         -bqsr recal1.table \
+         -before recal2.table \
+         -after recal3.table \
+         -plots AnalyzeCovariates.pdf
+     
+
+Notes
+~~~~~
+
+-  Sometimes you may want to compare recalibration tables where the
+   "after" table was actually generated first. To suppress warnings
+   about the dates of creation of the files, use the
+   \`--ignore-last-modification-times\` argument.
+-  You can ignore the before/after semantics completely if you like, but
+   all tables must have been generated using the same parameters.
+
+    ]]></help>
+
+    <expand macro="citations"/>
+
+</tool>
