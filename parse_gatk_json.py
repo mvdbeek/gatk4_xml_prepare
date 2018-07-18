@@ -295,12 +295,13 @@ class JsonShell(object):
                 if entry['type'] not in self.known_types:
                     print('Argument type %s not recognized, skipping.' % entry['type'])
                     continue
-                if entry['kind'] not in self.sectional_params:
-                    if entry['name'] not in self.common:
-                        self.xml_params.extend(JsonXml(entry).xml_param_out)
-                else:
-                    self.sectional_params[entry['kind']].extend([param.replace('\t\t', '\t\t\t') for param in JsonXml(entry).xml_param_out])
-                self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
+
+                if entry['name'] not in self.common:
+                    if entry['kind'] not in self.sectional_params:
+                            self.xml_params.extend(JsonXml(entry).xml_param_out)
+                    else:
+                        self.sectional_params[entry['kind']].extend([param.replace('\t\t', '\t\t\t') for param in JsonXml(entry).xml_param_out])
+                    self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
             for section in self.sectional_params:
                 section_template = {'name': section, 'label': section.title()}
                 self.xml_params.append(Template('\t\t<section name="$name" title="$label Parameters" expanded="False">\n').substitute(section_template))
