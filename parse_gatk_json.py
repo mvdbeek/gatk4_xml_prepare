@@ -352,10 +352,10 @@ class JsonShell(object):
         """
         shell_tmpl = OrderedDict([('tool', Template('<?xml version="1.0"?>\n<tool id="gatk4_$id" name="GATK4 $name" version="@WRAPPER_VERSION@0" profile="$profile">\n')),
                                 ('description', Template('\t<description>- $description</description>\n')),
-                                ('macros', ''),
+                                ('macros', None),
                                 ('expand', Template('\t<expand macro="requirements"/>\n\t<expand macro="version_cmd"/>\n')),
-                                ('command', ''),
-                                ('inputs', ''),
+                                ('command', None),
+                                ('inputs', None),
                                 ('inputs_close', Template('\t</inputs>\n')),
                                 ('outputs', Template('\t<outputs>\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')),
                                 ('tests', Template('\t<tests>\n\t</tests>\n')),
@@ -366,7 +366,8 @@ class JsonShell(object):
         if self.json_type == 'picard_vcf':
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t\t<import>picard_macros.xml</import>\n\t</macros>\n')
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t\t#include source=$$picard_ref_opts#\n\t\t#include source=$$picard_opts#\n\t\t#include source=$$picard_output_opts#\n\t]]></command>\n')
-            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />\n\t\t<expand macro="picard_params" />')
+            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />')
+            shell_tmpl['inputs_close'] = Template('\n\t\t<expand macro="picard_params" />\n\t</inputs>\n')
 
         else:
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t</macros>\n')

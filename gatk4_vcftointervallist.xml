@@ -22,11 +22,12 @@
 
     <inputs>
         <expand macro="ref_sel" />
-        <expand macro="picard_params" />
         <param name="input" argument="--INPUT" type="data" optional="false" format="vcf,vcf_bgzip" label="Input" help="The BCF or VCF input file. The file format is determined by file extension." />
         <section name="optional" title="Optional Parameters" expanded="False">
             <param name="include_filtered" argument="--INCLUDE_FILTERED" type="boolean" truevalue="--INCLUDE_FILTERED" falsevalue="" optional="true" checked="false" label="Include_Filtered" help="Include variants that were filtered in the output interval list." />
         </section>
+
+        <expand macro="picard_params" />
     </inputs>
 
     <outputs>
