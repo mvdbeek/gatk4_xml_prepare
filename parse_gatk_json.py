@@ -15,7 +15,6 @@ def supply_args():
     parser.add_argument('--json_type', choices=['picard_vcf'], help='Pass the type of file we are working with, so format tag can be filled.')
     parser.add_argument('--xml_out', help='Output XML')
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
-    parser.add_argument('--picard', dest='picard', action='store_true', default=False)
     args = parser.parse_args()
     return args
 
@@ -232,7 +231,7 @@ class JsonCheetah(JsonXml):
         :return:
         """
         if self.xml_out['section'] not in ['required', 'common']:
-            template_string = '$argument $${$section}.{$name}'
+            template_string = '$argument $${$section.$name}'
         else:
             template_string = '$argument $${$name}'
         if self.xml_out['type'] == 'boolean':
@@ -249,7 +248,7 @@ class JsonShell(object):
     description == help
     name == name
     """
-    def __init__(self, filename, json_type, picard=True, profile='17.09'):
+    def __init__(self, filename, json_type, profile='17.09'):
         """
 
         """
@@ -288,7 +287,7 @@ class JsonShell(object):
                        "--MAX_RECORDS_IN_RAM", "--GA4GH_CLIENT_SECRETS", "--CREATE_MD5_FILE", "--CREATE_INDEX",
                        "--COMPRESSION_LEVEL", "--REFERENCE_SEQUENCE", "--OUTPUT")
         self.profile = profile
-        self.picard = picard
+        self.json_type = json_type
         self.xml_params = []
         self.cheetah_params = []
         self.sectional_params = {'optional': [], 'advanced': []}
@@ -301,13 +300,13 @@ class JsonShell(object):
 
                 if entry['name'] not in self.common:
                     if entry['kind'] not in self.sectional_params:
-                            self.xml_params.extend(JsonXml(entry).xml_param_out)
+                        self.xml_params.extend(JsonXml(entry, self.json_type).xml_param_out)
                     else:
-                        self.sectional_params[entry['kind']].extend([param.replace('\t\t', '\t\t\t') for param in JsonXml(entry).xml_param_out])
+                        self.sectional_params[entry['kind']].extend([param.replace('\t\t', '\t\t\t') for param in JsonXml(entry, self.json_type).xml_param_out])
                     self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
             for section in self.sectional_params:
-                section_template = {'name': section, 'label': section.title()}
                 if self.sectional_params[section]:
+                    section_template = {'name': section, 'label': section.title()}
                     self.xml_params.append(Template('\t\t<section name="$name" title="$label Parameters" expanded="False">\n').substitute(section_template))
                     self.xml_params.extend(self.sectional_params[section])
                     self.xml_params.append('\t\t</section>\n')
@@ -356,21 +355,22 @@ class JsonShell(object):
         """
         shell_tmpl = OrderedDict([('tool', Template('<?xml version="1.0"?>\n<tool id="gatk4_$id" name="GATK4 $name" version="@WRAPPER_VERSION@0" profile="$profile">\n')),
                                 ('description', Template('\t<description>- $description</description>\n')),
-                                ('macros', ''),
+                                ('macros', None),
                                 ('expand', Template('\t<expand macro="requirements"/>\n\t<expand macro="version_cmd"/>\n')),
-                                ('command', ''),
-                                ('inputs', ''),
+                                ('command', None),
+                                ('inputs', None),
                                 ('inputs_close', Template('\t</inputs>\n')),
-                                ('outputs', ''),
+                                ('outputs', None),
                                 ('tests', Template('\t<tests>\n\t</tests>\n')),
                                 ('help', Template('\t<help><![CDATA[\n\t$summary\n\t]]></help>\n')),
                                 ('citations', Template('\t<expand macro="citations"/>\n')),
                                 ('tool_close', Template('</tool>'))])
 
-        if self.picard:
+        if self.json_type == 'picard_vcf':
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t\t<import>picard_macros.xml</import>\n\t</macros>\n')
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t\t#include source=$$picard_ref_opts#\n\t\t#include source=$$picard_opts#\n\t\t#include source=$$picard_output_opts#\n\t]]></command>\n')
-            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="gatk_req_params" />\n\t\t<expand macro="picard_params" />')
+            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />')
+            shell_tmpl['inputs_close'] = Template('\n\t\t<expand macro="picard_params" />\n\t</inputs>\n')
             shell_tmpl['outputs'] = Template('\t<outputs>\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')
 
         else:
@@ -391,7 +391,7 @@ def main():
     :return:
     """
     args = supply_args()
-    myshell = JsonShell(args.json, args.json_type, args.picard)
+    myshell = JsonShell(args.json, args.json_type)
     myshell.get_shell(args.xml_out)
 
 if __name__ == "__main__":

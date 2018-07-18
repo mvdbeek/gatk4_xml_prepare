@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<tool id="gatk4_vcftointervallist (picard)" name="GATK4 VcfToIntervalList (Picard)" version="@WRAPPER_VERSION@0" profile="17.09">
+<tool id="gatk4_vcftointervallist" name="GATK4 VcfToIntervalList (Picard)" version="@WRAPPER_VERSION@0" profile="17.09">
 
     <description>- Converts a VCF or BCF file to a Picard Interval List</description>
 
@@ -13,7 +13,7 @@
 
     <command detect_errors="exit_code"><![CDATA[
         @CMD_BEGIN@ VcfToIntervalList
-        ${optional}.{include_filtered}
+        ${optional.include_filtered}
         --INPUT ${input}
         #include source=$picard_ref_opts#
         #include source=$picard_opts#
@@ -21,14 +21,13 @@
     ]]></command>
 
     <inputs>
-        <expand macro="gatk_req_params" />
-        <expand macro="picard_params" />
-        <param name="input" argument="--INPUT" type="data" optional="false" format="" label="Input" help="The BCF or VCF input file. The file format is determined by file extension." />
+        <expand macro="ref_sel" />
+        <param name="input" argument="--INPUT" type="data" optional="false" format="vcf,vcf_bgzip" label="Input" help="The BCF or VCF input file. The file format is determined by file extension." />
         <section name="optional" title="Optional Parameters" expanded="False">
             <param name="include_filtered" argument="--INCLUDE_FILTERED" type="boolean" truevalue="--INCLUDE_FILTERED" falsevalue="" optional="true" checked="false" label="Include_Filtered" help="Include variants that were filtered in the output interval list." />
         </section>
-        <section name="advanced" title="Advanced Parameters" expanded="False">
-        </section>
+
+        <expand macro="picard_params" />
     </inputs>
 
     <outputs>
