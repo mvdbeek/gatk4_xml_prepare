@@ -336,7 +336,7 @@ class JsonShell(object):
         This will house all values the templates need.
         :return:
         """
-        shell_dict = {'id': self.json_file['name'].lower(),
+        shell_dict = {'id': self.json_file['name'].lower().split(' ')[0],
                       'name': self.json_file['name'],
                       'short_name': self.json_file['name'].split(' ')[0],
                       'profile': self.profile,
@@ -365,12 +365,12 @@ class JsonShell(object):
         if self.json_type == 'picard_vcf':
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t\t<import>picard_macros.xml</import>\n\t</macros>\n')
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t\t#include source=$$picard_ref_opts#\n\t\t#include source=$$picard_opts#\n\t\t#include source=$$picard_output_opts#\n\t]]></command>\n')
-            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="gatk_req_params" />\n\t\t<expand macro="picard_params" />')
+            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />\n\t\t<expand macro="picard_params" />')
 
         else:
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t</macros>\n')
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t]]></command>\n')
-            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="gatk_req_params" />')
+            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />')
         return shell_tmpl
 
 
