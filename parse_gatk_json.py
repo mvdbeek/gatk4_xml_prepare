@@ -397,14 +397,16 @@ class JsonShell(object):
 
         if self.json_type == 'picard_vcf':
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t\t<import>picard_macros.xml</import>\n\t</macros>\n')
-            shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t\t#include source=$$picard_ref_opts#\n\t\t#include source=$$picard_opts#\n\t\t#include source=$$picard_output_opts#\n\t]]></command>\n')
-            shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />')
             shell_tmpl['inputs_close'] = Template('\n\t\t<expand macro="picard_params" />\n\t</inputs>\n')
+            shell_tmpl['outputs_close'] = Template('\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')
             if self.my_xml.xml_out['argument'] not in self.output_params:
+                shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t\t#include source=$$picard_ref_opts#\n\t\t#include source=$$picard_opts#\n\t\t#include source=$$picard_vcf_output_opts#\n\t]]></command>\n')
+                shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />\n\t\t<expand macro="picard_vcf_params" />')
                 shell_tmpl['outputs'] = Template('\t<outputs>\n\t\t<expand macro="picard_vcf_output_params" />')
             else:
+                shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t\t#include source=$$picard_ref_opts#\n\t\t#include source=$$picard_opts#\n\t]]></command>\n')
+                shell_tmpl['inputs'] = Template('\t<inputs>\n\t\t<expand macro="ref_sel" />')
                 shell_tmpl['outputs'] = Template('\t<outputs>')
-            shell_tmpl['outputs_close'] = Template('\n\t\t<expand macro="picard_output_params" />\n\t</outputs>\n')
         else:
             shell_tmpl['macros'] = Template('\t<macros>\n\t\t<import>macros.xml</import>\n\t</macros>\n')
             shell_tmpl['command'] = Template('\t<command detect_errors="exit_code"><![CDATA[\n\t\t@CMD_BEGIN@ $short_name\n\t\t$cheetah_template\n\t]]></command>\n')
