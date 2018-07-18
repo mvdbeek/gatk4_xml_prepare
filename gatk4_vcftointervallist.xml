@@ -18,11 +18,12 @@
         --OUTPUT ${output}
         #include source=$picard_ref_opts#
         #include source=$picard_opts#
-        #include source=$picard_output_opts#
+        #include source=$picard_vcf_output_opts#
     ]]></command>
 
     <inputs>
         <expand macro="ref_sel" />
+        <expand macro="picard_vcf_params" />
         <param name="input" argument="--INPUT" type="data" optional="false" format="vcf,vcf_bgzip" label="Input" help="The BCF or VCF input file. The file format is determined by file extension." />
         <section name="optional" title="Optional Parameters" expanded="False">
             <param name="include_filtered" argument="--INCLUDE_FILTERED" type="boolean" truevalue="--INCLUDE_FILTERED" falsevalue="" optional="true" checked="false" label="Include_Filtered" help="Include variants that were filtered in the output interval list." />
@@ -32,6 +33,7 @@
     </inputs>
 
     <outputs>
+        <expand macro="picard_vcf_output_params" />
         <data format="picard_interval_list" name="output" label="${tool.name} on ${on_string}: picard_interval_list" />
         <expand macro="picard_output_params" />
     </outputs>

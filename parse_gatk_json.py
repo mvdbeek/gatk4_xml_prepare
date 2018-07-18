@@ -13,7 +13,7 @@ def supply_args():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--json', help='Input JSON')
     parser.add_argument('--json_type', choices=['picard_vcf'], help='Pass the type of file we are working with, so format tag can be filled.')
-    parser.add_argument('--xml_out', help='Output XML')
+    parser.add_argument('--xml_out', help='Output Directory')
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     args = parser.parse_args()
     return args
@@ -248,7 +248,7 @@ class JsonShell(object):
     description == help
     name == name
     """
-    def __init__(self, filename, json_type, profile='17.09'):
+    def __init__(self, args, profile='17.09'):
         """
 
         """
@@ -288,18 +288,20 @@ class JsonShell(object):
                        "--COMPRESSION_LEVEL", "--REFERENCE_SEQUENCE")
         self.output_params = ("--OUTPUT")
         self.profile = profile
-        self.json_type = json_type
+        self.args = args
+        self.json_type = args.json_type
         self.xml_params = []
         self.out_params = []
         self.cheetah_params = []
         self.sectional_params = {'optional': [], 'advanced': []}
-        with open(filename, 'rU') as myfile:
+        with open(args.json, 'rU') as myfile:
             self.json_file = json.load(myfile)
             self.shell_dict = self.build_shell_dict()
             for entry in self.json_file['arguments']:
                 if entry['type'] not in self.known_types:
                     print('Argument type %s not recognized, skipping.' % entry['type'])
                     continue
+                self.my_xml = JsonXml(entry, self.json_type)
                 if entry['name'] not in self.common and entry['name'] not in self.output_params:
                     if entry['kind'] not in self.sectional_params:
                         self.xml_params.extend(JsonXml(entry, self.json_type).xml_param_out)
@@ -307,7 +309,6 @@ class JsonShell(object):
                         self.sectional_params[entry['kind']].extend([param.replace('\t\t', '\t\t\t') for param in JsonXml(entry, self.json_type).xml_param_out])
                     self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
                 elif entry['name'] in self.output_params:
-                    self.my_xml = JsonXml(entry, self.json_type)
                     self.out_params.extend(self.build_output_template())
                     self.cheetah_params.append(JsonCheetah(entry).cheetah_template())
             for section in self.sectional_params:
@@ -317,11 +318,23 @@ class JsonShell(object):
                     self.xml_params.extend(self.sectional_params[section])
                     self.xml_params.append('\t\t</section>\n')
 
-    def get_shell(self, outfile):
+    def create_output_loc(self):
         """
-        Return the xml shell.
+        Create the output file name for writing, based on input folder.
         :return:
         """
+        self.output_name = [self.args.xml_out, 'gatk4_' + self.json_file['name'].lower().split(' ')[0] + '.xml']
+        if not self.args.xml_out.endswith('/'):
+            return '/'.join(self.output_name)
+        else:
+            return ''.join(self.output_name)
+
+    def get_shell(self):
+        """
+        Write the xml file.
+        :return:
+        """
+        outfile = self.create_output_loc()
         self.handle_out = open(outfile, 'w')
         if 'cheetah_template' not in self.shell_dict:
             self.shell_dict['cheetah_template'] = '\n\t\t'.join(self.cheetah_params)
@@ -362,8 +375,11 @@ class JsonShell(object):
         to file type.
         :return:
         """
-        output_type_map = {self.shell_dict['id']: 'picard_interval_list'}
-        return output_type_map[tool_name]
+        output_type_map = {'vcftointervallist': 'picard_interval_list'}
+        try:
+            return output_type_map[tool_name]
+        except:
+            raise Exception("We don't know what kind of OUTPUT file this should be!")
 
     def build_output_template(self):
         """
@@ -425,8 +441,8 @@ def main():
     :return:
     """
     args = supply_args()
-    myshell = JsonShell(args.json, args.json_type)
-    myshell.get_shell(args.xml_out)
+    myshell = JsonShell(args)
+    myshell.get_shell()
 
 if __name__ == "__main__":
     main()
