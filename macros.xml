@@ -30,11 +30,27 @@
     </template>
 
     <template name="bam_index"><![CDATA[
-        #if $input.is_of_type("bam"):
+        #if $input.is_of_type("bam")
             ln -s $input input.bam &&
             samtools index input.bam &&
         #else
             ln -s $input input.sam &&
+            samtools view -bS input.sam -o input.bam &&
+            samtools index input.bam &&
+        #end if
+    ]]></template>
+
+    <!--Picard tool BAM input-->
+    <template name="picard_bam_input">
+        --INPUT input.bam
+    </template>
+
+    <template name="picard_bam_index"><![CDATA[
+        #if $input.is_of_type("bam")
+            ln -s $INPUT input.bam &&
+            samtools index input.bam &&
+        #else
+            ln -s $INPUT input.sam &&
             samtools view -bS input.sam -o input.bam &&
             samtools index input.bam &&
         #end if
@@ -59,38 +75,38 @@
     </xml>
 
     <template name="gatk_ints_chth">
-    #if str($ival_type.ival_type_sel) == "ival_file":
-        #if $ival_type.intervals:
-            #if $ival_type.intervals.is_of_type("gatk_interval"):
+    #if str($ival_type.ival_type_sel) == "ival_file"
+        #if $ival_type.intervals
+            #if $ival_type.intervals.is_of_type("gatk_interval")
                 --intervals intervals.interval_list
             #end if
-            #if $ival_type.intervals.is_of_type("bed"):
+            #if $ival_type.intervals.is_of_type("bed")
                 --intervals intervals.bed
             #end if
-            #if $ival_type.intervals.is_of_type("vcf"):
+            #if $ival_type.intervals.is_of_type("vcf")
                 --intervals intervals.vcf
             #end if
         #end if
     #else
-        #if $ival_type.intervals:
+        #if $ival_type.intervals
             --intervals "${ival_type.intervals}"
         #end if
     #end if
-    #if $ival_type.interval_padding:
+    #if $ival_type.interval_padding
         --interval-padding "${ival_type.interval_padding}"
     #end if
     </template>
 
     <template name="pre_gatk_ints_chth"><![CDATA[
-    #if str($ival_type.ival_type_sel) == "ival_file":
-        #if $ival_type.intervals:
-            #if $ival_type.intervals.is_of_type("gatk_interval"):
+    #if str($ival_type.ival_type_sel) == "ival_file"
+        #if $ival_type.intervals
+            #if $ival_type.intervals.is_of_type("gatk_interval")
                 ln -s $ival_type.intervals intervals.interval_list &&
             #end if
-            #if $ival_type.intervals.is_of_type("bed"):
+            #if $ival_type.intervals.is_of_type("bed")
                 ln -s $ival_type.intervals intervals.bed &&
             #end if
-            #if $ival_type.intervals.is_of_type("vcf"):
+            #if $ival_type.intervals.is_of_type("vcf")
                 ln -s $ival_type.intervals intervals.vcf &&
             #end if
          #end if
@@ -117,38 +133,38 @@
     </xml>
 
     <template name="gatk_excl_ints_chth">
-    #if str($excl_ival_type.excl_ival_type_sel) == "excl_ival_file":
-        #if $excl_ival_type.exclude_intervals:
-            #if $excl_ival_type.exclude_intervals.is_of_type("gatk_interval"):
+    #if str($excl_ival_type.excl_ival_type_sel) == "excl_ival_file"
+        #if $excl_ival_type.exclude_intervals
+            #if $excl_ival_type.exclude_intervals.is_of_type("gatk_interval")
                 --exclude-intervals excl_intervals.interval_list
             #end if
-            #if $excl_ival_type.exclude_intervals.is_of_type("bed"):
+            #if $excl_ival_type.exclude_intervals.is_of_type("bed")
                 --exclude-intervals excl_intervals.bed
             #end if
-            #if $excl_ival_type.exclude_intervals.is_of_type("vcf"):
+            #if $excl_ival_type.exclude_intervals.is_of_type("vcf")
                 --exclude-intervals excl_intervals.vcf
             #end if
         #end if
     #else
-        #if $excl_ival_type.exclude_intervals:
+        #if $excl_ival_type.exclude_intervals
             --exclude-intervals "${excl_ival_type.exclude_intervals}"
         #end if
     #end if
-    #if $excl_ival_type.interval_exclusion_padding:
+    #if $excl_ival_type.interval_exclusion_padding
         --interval-exclusion-padding "${excl_ival_type.interval_exclusion_padding}"
     #end if
     </template>
 
     <template name="pre_gatk_excl_ints_chth"><![CDATA[
-    #if str($excl_ival_type.excl_ival_type_sel) == "excl_ival_file":
-        #if $excl_ival_type.exclude_intervals:
-            #if $excl_ival_type.exclude_intervals.is_of_type("gatk_interval"):
+    #if str($excl_ival_type.excl_ival_type_sel) == "excl_ival_file"
+        #if $excl_ival_type.exclude_intervals
+            #if $excl_ival_type.exclude_intervals.is_of_type("gatk_interval")
                 ln -s $excl_ival_type.exclude_intervals excl_intervals.interval_list &&
             #end if
-            #if $excl_ival_type.exclude_intervals.is_of_type("bed"):
+            #if $excl_ival_type.exclude_intervals.is_of_type("bed")
                 ln -s $excl_ival_type.exclude_intervals excl_intervals.bed &&
             #end if
-            #if $excl_ival_type.exclude_intervals.is_of_type("vcf"):
+            #if $excl_ival_type.exclude_intervals.is_of_type("vcf")
                 ln -s $excl_ival_type.exclude_intervals excl_intervals.vcf &&
             #end if
          #end if
@@ -158,9 +174,9 @@
 
     <!--Macros for multiple input tools.  List[File] in GATK json.-->
     <template name="vcf_tabix_multi"><![CDATA[
-        #for $num, $file in enumerate($input):
+        #for $num, $file in enumerate($input)
             #set datatype = $file.datatype
-            #if $file.is_of_type("vcf_bgzip"):
+            #if $file.is_of_type("vcf_bgzip")
                 ln -s $file input${num}.vcf.gz &&
                 tabix input${num}.vcf.gz &&
             #else
@@ -170,8 +186,8 @@
     ]]></template>
 
     <template name="vcf_input_multi_picard"><![CDATA[
-        #for $num, $file in enumerate($input):
-            #if $file.is_of_type("vcf_bgzip"):
+        #for $num, $file in enumerate($input)
+            #if $file.is_of_type("vcf_bgzip")
                 --INPUT input${num}.vcf.gz
             #else
                 --INPUT input${num}.vcf
@@ -180,11 +196,37 @@
     ]]></template>
 
     <template name="vcf_input_multi"><![CDATA[
-        #for $num, $file in enumerate($input):
-            #if $file.is_of_type("vcf_bgzip"):
+        #for $num, $file in enumerate($input)
+            #if $file.is_of_type("vcf_bgzip")
                 --input input${num}.vcf.gz
             #else
                 --input input${num}.vcf
+            #end if
+        #end for
+    ]]></template>
+
+    <template name="gatk_input_multi"><![CDATA[
+        #for $num, $file in enumerate($variant)
+            #if $file.is_of_type("vcf_bgzip")
+                --variant input${num}.vcf.gz
+            #elif $file.is_of_type("txt")
+                --variant input${num}.list
+            #else
+                --variant input${num}.vcf
+            #end if
+        #end for
+    ]]></template>
+
+    <template name="gatk_tabix_multi"><![CDATA[
+        #for $num, $file in enumerate($variant)
+            #set datatype = $file.datatype
+            #if $file.is_of_type("vcf_bgzip")
+                ln -s $file input${num}.vcf.gz &&
+                tabix input${num}.vcf.gz &&
+            #elif $file.is_of_type("txt")
+                ln -s $file input${num}.list &&
+            #else
+                ln -s $file input${num}.vcf &&
             #end if
         #end for
     ]]></template>
@@ -196,7 +238,7 @@
     <!--Picard single input tools-->
     <template name="vcf_tabix"><![CDATA[
         #set datatype = $input.datatype
-        #if $input.is_of_type("vcf_bgzip"):
+        #if $input.is_of_type("vcf_bgzip")
             ln -s $input input.vcf.gz &&
             tabix input.vcf.gz &&
         #else
@@ -204,8 +246,19 @@
         #end if
     ]]></template>
 
+    <template name="gatk_tabix"><![CDATA[
+        #set datatype = $variant.datatype
+        #if $variant.is_of_type("vcf_bgzip")
+            ln -s $variant input.vcf.gz &&
+            tabix input.vcf.gz &&
+        #else
+            ln -s $variant input.vcf &&
+            gatk IndexFeatureFile -F input.vcf &&
+        #end if
+    ]]></template>
+
     <template name="vcf_input_picard"><![CDATA[
-        #if $input.is_of_type("vcf_bgzip"):
+        #if $input.is_of_type("vcf_bgzip")
             --INPUT input.vcf.gz
         #else
             --INPUT input.vcf
@@ -213,15 +266,45 @@
     ]]></template>
 
     <template name="vcf_input"><![CDATA[
-        #if $input.is_of_type("vcf_bgzip"):
+        #if $input.is_of_type("vcf_bgzip")
             --input input.vcf.gz
         #else
             --input input.vcf
         #end if
     ]]></template>
 
+    <template name="gatk_input"><![CDATA[
+        #if $variant.is_of_type("vcf_bgzip")
+            --variant input.vcf.gz
+        #else
+            --variant input.vcf
+        #end if
+    ]]></template>
+
+    <template name="gatk_gvcf_tabix"><![CDATA[
+        #if $variant
+            ln -s $variant input.g.vcf &&
+        #end if
+    ]]></template>
+
+    <template name="gatk_gvcf_input"><![CDATA[
+        --variant input.g.vcf
+    ]]></template>
+
+    <xml name="gatk_gvcf_input_params">
+	    <param name="variant" type="data" multiple="false" format="vcf" label="Input gVCF file" help=""/>
+    </xml>
+
     <xml name="vcf_input_params">
         <param name="input" type="data" multiple="false" format="vcf,vcf_bgzip" label="Input VCF file" help="Input VCF(s) to be sorted. Multiple inputs must have the same sample names (in order)"/>
+    </xml>
+
+    <xml name="gatk_vcf_input_params">
+        <param name="variant" type="data" multiple="false" format="vcf,vcf_bgzip" label="Input VCF file" help="A VCF file containing variants."/>
+    </xml>
+
+    <xml name="gatk_vcf_input_params_multi">
+        <param name="variant" type="data" multiple="true" format="vcf,vcf_bgzip,txt" label="Input VCF file(s)" help="A VCF file containing variants or a list of VCFs. Can be specified multiple times."/>
     </xml>
 
     <xml name="gatk_req_params">
@@ -246,13 +329,43 @@
         <data format="h5" name="output" label="${tool.name} on ${on_string}: HDF5" help="Output file for read counts." />
     </xml>
 
+    <!--Output specific to ModelSegments.  Files created based on prefix, so force that to be what we want, then pull important files with from_work_dir.-->
+    <!--${SAMPLE}.cr.seg-->
+    <!--${SAMPLE}.modelFinal.seg-->
+    <template name="modelsegments_chth"><![CDATA[
+        --output "."
+        --output-prefix "modelsegments"
+    ]]></template>
+
+    <xml name="modelsegments_output">
+        <data format="tabular" name="cr_seg" label="${tool.name} on ${on_string}: cr.seg" help="Copy-ratio segments." from_work_dir="modelsegments.cr.seg"/>
+        <data format="tabular" name="modelfinal_seg" label="${tool.name} on ${on_string}: modelFinal.seg" help="Modeled Segments" from_work_dir="modelsegments.modelFinal.seg"/>
+    </xml>
+
+    <!--deltaMAD.txt-->
+    <!--denoisedLimit4.png-->
+    <!--denoisedMAD.txt-->
+    <!--denoised.png-->
+    <!--scaledDeltaMAD.txt-->
+    <!--modeled.png-->
+    <!--standardizedMAD.txt-->
+
+    <template name="plotmodeledsegments_chth"><![CDATA[
+        --output "."
+        --output-prefix "plotmodeledsegments"
+    ]]></template>
+
+    <xml name="plotmodeledsegments_output">
+        <data format="png" name="modeled_png" label="${tool.name} on ${on_string}: modeled.png" help="Copy-Ratio Plot" from_work_dir="plotmodeledsegments.modeled.png"/>
+    </xml>
+
     <!--Common Picard options-->
     <template name="picard_opts">
-        #if $picard_adv.arguments_file:
+        #if $picard_adv.arguments_file
             --arguments_file ${picard_adv.arguments_file}
         #end if
         --COMPRESSION_LEVEL ${picard_adv.COMPRESSION_LEVEL}
-        #if $picard_adv.GA4GH_CLIENT_SECRETS:
+        #if $picard_adv.GA4GH_CLIENT_SECRETS
             --GA4GH_CLIENT_SECRETS ${picard_adv.GA4GH_CLIENT_SECRETS}
         #end if
         --MAX_RECORDS_IN_RAM ${picard_adv.MAX_RECORDS_IN_RAM}
@@ -288,12 +401,12 @@
     </xml>
 
     <!--Provides option to create gzipped output for VCXF files-->
-    <xml name="picard_vcf_params">
+    <xml name="gzip_vcf_params">
         <param name="gzipped_output" type="boolean" checked="true" label="GZIP Output?" help="If you would like gzipped output, check this box.  In general, it would be preferable to do this, unless your downstream tool does not support handling of gzipped files." />
     </xml>
 
     <!--Output related Picard options-->
-    <xml name="picard_vcf_output_params">
+    <xml name="gzip_vcf_output_params">
         <data format="vcf" name="output_vcf" label="${tool.name} on ${on_string}: vcf" from_work_dir="output.vcf" >
 			<filter>not gzipped_output</filter>
 		</data>
@@ -305,17 +418,17 @@
 
     <!--These are the same, other than the capitalization of output, so maybe a better way to do this.-->
     <template name="picard_vcf_output_opts">
-        #if $gzipped_output:
+        #if $gzipped_output
 			--OUTPUT output.vcf.gz
-		#else:
+		#else
 			--OUTPUT output.vcf
 		#end if
     </template>
 
     <template name="vcf_output_opts">
-        #if $gzipped_output:
+        #if $gzipped_output
 			--output output.vcf.gz
-		#else:
+		#else
 			--output output.vcf
 		#end if
     </template>
@@ -348,40 +461,40 @@
     </xml>
 
     <template name="picard_ref_opts_opt">
-        #if $optional.reference_source.reference_source_selector != "no_ref":
-            #if $optional.reference_source.reference_source_selector != "history":
+        #if $optional.reference_source.reference_source_selector != "no_ref"
+            #if $optional.reference_source.reference_source_selector != "history"
                 --REFERENCE_SEQUENCE ${optional.reference_source.reference_sequence.fields.path}
-            #else:
+            #else
                 --REFERENCE_SEQUENCE ${optional.reference_source.reference_sequence}
             #end if
         #end if
     </template>
 
     <template name="picard_ref_opts">
-        #if $reference_source.reference_source_selector != "no_ref":
-            #if $reference_source.reference_source_selector != "history":
+        #if $reference_source.reference_source_selector != "no_ref"
+            #if $reference_source.reference_source_selector != "history"
                 --REFERENCE_SEQUENCE ${reference_source.reference_sequence.fields.path}
-            #else:
+            #else
                 --REFERENCE_SEQUENCE ${reference_source.reference_sequence}
             #end if
         #end if
     </template>
 
     <template name="ref_opts">
-        #if $reference_source.reference_source_selector != "no_ref":
-            #if $reference_source.reference_source_selector != "history":
+        #if $reference_source.reference_source_selector != "no_ref"
+            #if $reference_source.reference_source_selector != "history"
                 --reference ${reference_source.reference_sequence.fields.path}
-            #else:
+            #else
                 --reference ${reference_source.reference_sequence}
             #end if
         #end if
     </template>
 
     <template name="ref_opts_opt">
-        #if $optional.reference_source.reference_source_selector != "no_ref":
-            #if $optional.reference_source.reference_source_selector != "history":
+        #if $optional.reference_source.reference_source_selector != "no_ref"
+            #if $optional.reference_source.reference_source_selector != "history"
                 --reference ${optional.reference_source.reference_sequence.fields.path}
-            #else:
+            #else
                 --reference ${optional.reference_source.reference_sequence}
             #end if
         #end if
@@ -410,12 +523,23 @@
     </xml>
 
     <template name="picard_seqdict_opts">
-        #if $optional.seqdict_source.seqdict_source_selector != "no_seq_dict":
-            #if $optional.seqdict_source.seqdict_source_selector != "history":
+        #if $optional.seqdict_source.seqdict_source_selector != "no_seq_dict"
+            #if $optional.seqdict_source.seqdict_source_selector != "history"
                 #set seq_dict_loc = ''.join($optional.seqdict_source.seqdict_sequence.fields.path.split('.')[:-1]) + '.dict'
                 --SEQUENCE_DICTIONARY $seq_dict_loc
-            #else:
+            #else
                 --SEQUENCE_DICTIONARY ${optional.seqdict_source.seqdict_sequence}
+            #end if
+        #end if
+    </template>
+
+    <template name="gatk_seqdict">
+        #if $seqdict_source.seqdict_source_selector != "no_seq_dict"
+            #if $seqdict_source.seqdict_source_selector != "history"
+                #set seq_dict_loc = ''.join($seqdict_source.seqdict_sequence.fields.path.split('.')[:-1]) + '.dict'
+                --sequence-dictionary $seq_dict_loc
+            #else
+                --sequence-dictionary ${seqdict_source.seqdict_sequence}
             #end if
         #end if
     </template>
