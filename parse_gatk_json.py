@@ -18,6 +18,7 @@ def supply_args():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--json', help='Input JSON')
     parser.add_argument('--xml_out', help='Output Directory')
+    parser.add_argument('--old_galaxy', action="store_true", help="Produce XML for Galaxy versions that don't support section tag")
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     args = parser.parse_args()
     return args
@@ -50,6 +51,7 @@ class Mappings(object):
                              'Set[String]': 'text',
                              'File': 'data',
                              'Set[File]': 'data',
+                             'Set[MetricAccumulationLevel]': 'text',
                              'List[File]': 'data',
                              'List[Double]': 'text',
                              'List[Integer]': 'integer',
@@ -79,7 +81,7 @@ class Mappings(object):
                             "COMPRESSION_LEVEL", "REFERENCE_SEQUENCE", "OUTPUT", "SEQUENCE_DICTIONARY", "INPUT",
                             "input", "reference", "output", "annotation", "annotation_group", "annotations_to_exclude",
                             "intervals", "exclude_intervals", "read_index", "interval_padding",
-                            "interval_exclusion_padding")
+                            "interval_exclusion_padding", "output_prefix", "sequence_dictionary", "variant")
         self.read_filter_args = ('')
         # There seems to be a significant amount of information that can't be retrieved from the provided json.
         # Make this in to a config file.
@@ -93,42 +95,54 @@ class Mappings(object):
                               {'output_fmt': {},
                                'pre_tmpls': ['vcf_tabix_multi'],
                                'post_tmpls': ['picard_opts', 'picard_vcf_output_opts', 'vcf_input_multi', 'picard_ref_opts_opt', 'picard_seqdict_opts'],
-                               'pre_params': ['picard_vcf_params', 'vcf_input_params_multi'],
+                               'pre_params': ['gzip_vcf_params', 'vcf_input_params_multi'],
                                'opt_params': ['ref_sel', 'seq_dict_sel'],
                                'post_params': ['picard_params'],
-                               'output_params': ['picard_vcf_output_params', 'picard_output_params']},
+                               'output_params': ['gzip_vcf_output_params', 'picard_output_params']},
                           'GenotypeGVCFs':
                               {'output_fmt': {},
                                'input_fmt': {},
-                               'pre_tmpls': ['vcf_tabix', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-                               'post_tmpls': ['ref_opts_opt', 'vcf_output_opts', 'vcf_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-                               'pre_params': ['ref_sel', 'gatk_req_params', 'picard_vcf_params', 'gatk_ints',
+                               'pre_tmpls': ['gatk_tabix', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
+                               'post_tmpls': ['ref_opts', 'vcf_output_opts', 'gatk_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
+                               'pre_params': ['ref_sel', 'gzip_vcf_params', 'gatk_ints', 'gatk_vcf_input_params',
                                               'gatk_excl_ints'],
                                'opt_params': [],
                                'adv_params': [],
                                'post_params': [],
-                               'output_params': ['picard_vcf_output_params']},
+                               'output_params': ['gzip_vcf_output_params']},
+                          'CombineGVCFs':
+                              {'output_fmt': {},
+                               'input_fmt': {},
+                               'pre_tmpls': ['gatk_tabix_multi', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
+                               'post_tmpls': ['ref_opts', 'vcf_output_opts', 'gatk_input_multi', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
+                               'pre_params': ['ref_sel', 'gzip_vcf_params', 'gatk_vcf_input_params_multi', 'gatk_ints', 'gatk_excl_ints'],
+                               'opt_params': [],
+                               'adv_params': [],
+                               'post_params': [],
+                               'output_params': ['gzip_vcf_output_params']},
                           'HaplotypeCaller':
                               {'output_fmt': {},
                                'input_fmt': {},
                                'pre_tmpls': ['bam_index', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
                                'post_tmpls': ['ref_opts', 'vcf_output_opts', 'gatk_bam_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-                               'pre_params': ['ref_sel', 'gatk_req_params', 'picard_vcf_params', 'gatk_ints', 'gatk_excl_ints'],
+                               'pre_params': ['ref_sel', 'gatk_req_params', 'gzip_vcf_params', 'gatk_ints', 'gatk_excl_ints'],
                                'opt_params': [],
                                'adv_params': [],
                                'post_params': [],
-                               'output_params': ['picard_vcf_output_params']},
+                               'output_params': ['gzip_vcf_output_params']},
                           'SelectVariants':
                               {'output_fmt': {},
                                'input_fmt': {},
-                               'pre_tmpls': ['vcf_tabix', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-                               'post_tmpls': ['ref_opts_opt', 'vcf_output_opts', 'vcf_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-                               'pre_params': ['ref_sel', 'gatk_req_params', 'picard_vcf_params', 'gatk_ints',
-                                              'gatk_excl_ints'],
+                               'pre_tmpls': ['gatk_tabix', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
+                               'post_tmpls': ['ref_opts', 'vcf_output_opts', 'gatk_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
+                               'pre_params': ['ref_sel', 'gzip_vcf_params', 'gatk_vcf_input_params', 'gatk_ints', 'gatk_excl_ints'],
+                               # 'pre_tmpls': [],
+                               # 'post_tmpls': [],
+                               # 'pre_params': [],
                                'opt_params': [],
                                'adv_params': [],
                                'post_params': [],
-                               'output_params': ['picard_vcf_output_params']},
+                               'output_params': ['gzip_vcf_output_params']},
                           'CollectReadCounts':
                               {'output_fmt': {},
                                'input_fmt': {},
@@ -144,57 +158,53 @@ class Mappings(object):
                                'input_fmt': {},
                                'pre_tmpls': ['bam_index', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
                                'post_tmpls': ['ref_opts_opt', 'vcf_output_opts', 'gatk_bam_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-                               'pre_params': ['ref_sel', 'gatk_req_params', 'picard_vcf_params', 'gatk_ints',
+                               'pre_params': ['ref_sel', 'gatk_req_params', 'gzip_vcf_params', 'gatk_ints',
                                               'gatk_excl_ints'],
                                'opt_params': [],
                                'adv_params': [],
                                'post_params': [],
-                               'output_params': ['picard_vcf_output_params']},
+                               'output_params': ['gzip_vcf_output_params']},
                           'ModelSegments':
                               {'output_fmt': {},
-                               'input_fmt': {'denoised_copy_ratios': 'tabular',
-                                             'allelic_counts': 'tabular'},
-                               'pre_tmpls': ['pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-                               'post_tmpls': ['ref_opts_opt', 'vcf_output_opts', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-                               'pre_params': ['ref_sel', 'gatk_req_params', 'picard_vcf_params', 'gatk_ints',
-                                              'gatk_excl_ints'],
-                               'opt_params': [],
-                               'adv_params': [],
-                               'post_params': [],
-                               'output_params': ['picard_vcf_output_params']},
-                          'CallCopyRatioSegments':
-                              {'output_fmt': {},
                                'input_fmt': {},
-                               'pre_tmpls': ['bam_index', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-                               'post_tmpls': ['ref_opts_opt', 'vcf_output_opts', 'gatk_bam_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-                               'pre_params': ['ref_sel', 'gatk_req_params', 'picard_vcf_params', 'gatk_ints',
-                                              'gatk_excl_ints'],
+                               'pre_tmpls': [],
+                               'post_tmpls': ['modelsegments_chth'],
+                               'pre_params': [],
                                'opt_params': [],
                                'adv_params': [],
                                'post_params': [],
-                               'output_params': ['picard_vcf_output_params']},
+                               'output_params': ['modelsegments_output']},
+                          'CallCopyRatioSegments':
+                              {'output_fmt': {'output': 'tabular'},
+                               'input_fmt': {'input': 'tabular'},
+                               'pre_tmpls': [],
+                               'post_tmpls': [],
+                               'pre_params': [],
+                               'opt_params': [],
+                               'adv_params': [],
+                               'post_params': [],
+                               'output_params': []},
                           'PlotModeledSegments':
                               {'output_fmt': {},
                                'input_fmt': {},
-                               'pre_tmpls': ['bam_index', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-                               'post_tmpls': ['ref_opts_opt', 'vcf_output_opts', 'gatk_bam_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-                               'pre_params': ['ref_sel', 'gatk_req_params', 'picard_vcf_params', 'gatk_ints',
-                                              'gatk_excl_ints'],
+                               'pre_tmpls': [],
+                               'post_tmpls': ['plotmodeledsegments_chth', 'gatk_seqdict'],
+                               'pre_params': ['seq_dict_sel'],
                                'opt_params': [],
                                'adv_params': [],
                                'post_params': [],
-                               'output_params': ['picard_vcf_output_params']},
+                               'output_params': ['plotmodeledsegments_output']},
                           'CollectAllelicCounts':
                               {'output_fmt': {},
                                'input_fmt': {},
                                'pre_tmpls': ['bam_index', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
                                'post_tmpls': ['ref_opts_opt', 'vcf_output_opts', 'gatk_bam_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-                               'pre_params': ['ref_sel', 'gatk_req_params', 'picard_vcf_params', 'gatk_ints',
+                               'pre_params': ['ref_sel', 'gatk_req_params', 'gzip_vcf_params', 'gatk_ints',
                                               'gatk_excl_ints'],
                                'opt_params': [],
                                'adv_params': [],
                                'post_params': [],
-                               'output_params': ['picard_vcf_output_params']},
+                               'output_params': ['gzip_vcf_output_params']},
                           'DenoiseReadCounts':
                               {'output_fmt': {'denoised_copy_ratios': 'tabular',
                                               'standardized_copy_ratios': 'tabular'},
@@ -205,6 +215,16 @@ class Mappings(object):
                                'opt_params': [],
                                'adv_params': [],
                                'post_params': [],
+                               'output_params': []},
+                          'CollectHsMetrics':
+                              {'output_fmt': {'OUTPUT': 'tabular'},
+                               'input_fmt': {'INPUT': 'sam,bam'},
+                               'pre_tmpls': ['picard_bam_index'],
+                               'post_tmpls': ['picard_opts'],
+                               'pre_params': [],
+                               'opt_params': [],
+                               'adv_params': [],
+                               'post_params': ['picard_params'],
                                'output_params': []}
                           }
 
@@ -212,7 +232,8 @@ class Mappings(object):
         self.gen_out_fmt = {'activity_profile_out': 'tabular',
                             'assembly_region_out': 'tabular',
                             'graph_output': 'txt',
-                            'bam_output': 'bam'}
+                            'bam_output': 'bam'
+                            }
         self.gen_in_fmt = {'alleles': 'vcf,vcf_bgzip',
                            'pedigree': 'tabular',
                            'population_callset': 'vcf,vcf_bgzip',
@@ -223,7 +244,14 @@ class Mappings(object):
                            'gatk_config_file': 'txt',
                            'annotated_intervals': 'gatk_interval',
                            'count_panel_of_normals': 'h5',
-                           'dbsnp': 'vcf,vcf_bgzip'}
+                           'allelic_counts': 'tabular',
+                           'normal_allelic_counts': 'tabular',
+                           'denoised_copy_ratios': 'tabular',
+                           'dbsnp': 'vcf,vcf_bgzip',
+                           'BAIT_INTERVALS': 'picard_interval_list',
+                           'TARGET_INTERVALS': 'picard_interval_list',
+                           'segments': 'tabular'
+                           }
 
         self.param_tmpls = {'integer': ['name', 'argument', 'type', 'optional', 'value', 'min', 'max', 'label', 'help'],
                             'float': ['name', 'argument', 'type', 'optional', 'value', 'min', 'max', 'label', 'help'],
@@ -236,30 +264,38 @@ class Mappings(object):
 
 class XmlTemplates(object):
     def __init__(self):
-        self.xml_tmpl = Template('<expand macro="$macro_name" />')
+        # Cheetah section
         self.chth_tmpl = PercentTemplate('#include source=$%macro#')
-        self.sel_out = Template('<option value="$value" selected="$selected">$value</option>')
-        self.out_tmpl = Template('<data format="$format" name="$name" label="$${tool.name} on $${on_string}: $format" />')
-        self.vcf_choose = PercentTemplate('#if $%section.%name:'
-                                          '\n#if $%section.%name.is_of_type("vcf_bgzip"):'
+        self.req_out_chth = PercentTemplate('%argument $%name')
+        self.vcf_choose = PercentTemplate('#if $%section.%name'
+                                          '\n#if $%section.%name.is_of_type("vcf_bgzip")'
                                           '\n%argument %name.vcf.gz'
                                           '\n#else'
                                           '\n%argument %name.vcf'
                                           '\n#end if'
                                           '\n#end if')
-        self.vcf_tabix = PercentTemplate('#set datatype = $%section.%name.datatype'
-                                         '\n#if $%section.%name:'
-                                         '\n#if $%section.%name.is_of_type("vcf_bgzip"):'
+        self.vcf_tabix = PercentTemplate(
+                                         '#if $%section.%name'
+                                         '\n#set datatype = $%section.%name.datatype'
+                                         '\n#if $%section.%name.is_of_type("vcf_bgzip")'
                                          '\nln -s $%section.%name %name.vcf.gz &&'
                                          '\ntabix %name.vcf.gz &&'
                                          '\n#else'
                                          '\nln -s $%section.%name %name.vcf &&'
                                          '\n#end if'
                                          '\n#end if')
-        self.req_out_chth = PercentTemplate('%argument $%name')
-        self.file_chth = PercentTemplate('#if $output_opt.%out_sel_name:\n%argument $%name\n#end if')
-        self.ext_arg = '#if $%section.%name:\n%argument $%section.%name\n#end if'
-        self.reg_arg = '#if $%name:\n%argument $%name\n#end if'
+        self.file_chth = PercentTemplate('#if $%section.%out_sel_name\n%argument $%name\n#end if')
+#        self.file_chth_old_gal = PercentTemplate('#if str($output_opt.output_opt_sel) == "yes":\n#if $output_opt.%out_sel_name:\n%argument $%name\n#end if\n#end if')
+        self.ext_arg = '#if $%section.%name\n%argument $%section.%name\n#end if'
+#        self.ext_arg_old_gal = '#if str($%section.%{section}_sel) == "yes":\n#if $%section.%name:\n%argument $%section.%name\n#end if\n#end if'
+        self.reg_arg = '#if $%name\n%argument $%name\n#end if'
+
+        # XML section. Most of this is handled via etrees, but some cases are more easily handled here.
+        self.xml_tmpl = Template('<expand macro="$macro_name" />')
+        self.sel_out = Template('<option value="$value" selected="$selected">$value</option>')
+        self.out_label_tmpl = Template('$${tool.name} on $${on_string}: $name $format')
+        self.out_tmpl = Template('<data format="$format" name="$name" label="$${tool.name} on $${on_string}: $format" />')
+
 
 class JsonXml(Mappings, XmlTemplates):
     """
@@ -279,18 +315,37 @@ class JsonXml(Mappings, XmlTemplates):
       "kind": "optional",
       "options": []
     """
-    def __init__(self, blob, tool_name):
+    def __init__(self, blob, tool_name, args):
         """
         :param blob:
         """
+        # Access mappings and templates for each parameter.
         Mappings.__init__(self)
         XmlTemplates.__init__(self)
+        # This comes from the json file provided from GATK4.
+        self.args = args
         self.blob = blob
+        # Tool name, currently passed as input.
         self.tool_name = tool_name
-        self.type = blob['type']
-        self.section = blob['kind']
+        # Type comes from mapping of json 'types' to types recognized in a Galaxy xml.
+        try:
+            self.type = self.xml_json_type_map[blob['type']]
+        except:
+            raise Exception('Argument type %s not recognized.' % self.blob['type'])
+        # Make parameter name available more readily.
         self.pname = self.blob['name'].lstrip('-').replace('-', '_')
+        # The 'kind' category determines section, and required status of parameter.
+        # Potential values are ('advanced', 'common', 'deprecated', 'optional', 'positional', 'required')
+        self.section = blob['kind']
+        # Remove the section variable when we don't want to use the Galaxy section tag.
+        if self.pname in self.gen_out_fmt:
+            self.section = 'output_opt'
+        if self.args.old_galaxy:
+            self.section = ''
+        # Since output status is not listed in the json blob, we provide it as a mapping.
+        # TODO: Potentially search for phrase "Output" or "output" from description and set status accordingly.
         self.is_output = self.pname in self.gen_out_fmt
+
         self.is_req_output = self.pname in self.tool_data[self.tool_name]['output_fmt']
         self.is_input = (self.pname in self.tool_data[self.tool_name]['input_fmt']) or (self.pname in self.gen_in_fmt)
         if self.pname in self.gen_in_fmt:
@@ -302,13 +357,15 @@ class JsonXml(Mappings, XmlTemplates):
             self.out_sel_name = self.pname + '_sel'
             self.out_sel_arg = self.blob['name'] + '_sel'
         self.xml_out = self.reblob()
-        # Set to common is this argument is seen inside the known common arguments.
-        self.common = self.xml_out['name'] in self.common_args
+        # Set to common if this argument is seen inside the known common arguments.
+        self.common = self.pname in self.common_args and \
+                      self.pname not in self.tool_data[self.tool_name]['output_fmt'] and \
+                      self.pname not in self.tool_data[self.tool_name]['input_fmt']
         #self.has_mcro_xml = self.xml_out['name'] in self.macro_xml
         #self.has_mcro_tmpl = self.xml_out['name'] in self.macro_tmpl
         # Check to see if the type, as defined in the json file, is recognized.
-        if self.blob['type'] not in self.xml_json_type_map:
-            print('Argument type %s not recognized, skipping.' % self.blob['type'])
+        # if self.blob['type'] not in self.xml_json_type_map:
+        #     print('Argument type %s not recognized, skipping.' % self.blob['type'])
 
         if self.blob['options']:
             self.is_select = True
@@ -324,9 +381,17 @@ class JsonXml(Mappings, XmlTemplates):
             else:
                 self.chth_pre = None
             self.chth = self.cheetah_template()
+        elif self.section == 'common':
+            self.chth = self.cheetah_template()
+            self.chth_pre = None
         else:
             self.chth = None
             self.chth_pre = None
+
+        if self.chth and self.args.old_galaxy:
+            self.chth = self.chth.replace('$.', '$')
+        if self.chth_pre and self.args.old_galaxy:
+            self.chth_pre = self.chth_pre.replace('$.', '$')
 
 #        self.xml_param = {label:self.xml_out[label] for label in self.param_tmpls[self.xml_out['type']]}
 
@@ -340,6 +405,7 @@ class JsonXml(Mappings, XmlTemplates):
     def cheetah_template(self, pre=False):
         """
         Produce templates for how things looks in the Cheetah section.
+
         :return:
         """
         if self.is_req_output:
@@ -350,14 +416,20 @@ class JsonXml(Mappings, XmlTemplates):
             xml_out['out_sel_name'] = self.out_sel_name
             cht_tmpl = self.file_chth
             return cht_tmpl.substitute(self.xml_out)
-        elif self.is_input and not pre and self.gen_in_fmt[self.pname] == 'vcf,vcf_bgzip':
-            cht_tmpl = self.vcf_choose
+        elif self.is_input and not pre:
+            if self.pname in self.gen_in_fmt:
+                if self.gen_in_fmt[self.pname] == 'vcf,vcf_bgzip':
+                    cht_tmpl = self.vcf_choose
+                else:
+                    cht_tmpl = PercentTemplate(self.reg_arg)
+            elif self.pname in self.tool_data[self.tool_name]['input_fmt']:
+                cht_tmpl = self.req_out_chth
             return cht_tmpl.substitute(self.xml_out)
         elif self.is_input and pre:
             cht_tmpl = self.vcf_tabix
             return cht_tmpl.substitute(self.xml_out)
         else:
-            if self.xml_out['section'] not in ['required', 'common']:
+            if self.xml_out['section'] not in ['required']:
                 template_string = self.ext_arg
             else:
                 template_string = self.reg_arg
@@ -418,7 +490,7 @@ class JsonXml(Mappings, XmlTemplates):
         """
         xml_out = {'name': self.blob['name'].lstrip('-').replace('-', '_'),
                    'argument': self.blob['name'],
-                   'type': self._assign_type(self.xml_json_type_map[self.type]),
+                   'type': self._assign_type(self.type),
                    'label': self.blob['name'].lstrip('-').replace('-', ' ').title(),
                    'optional': self.xml_json_req_map[self.blob['required']],
                    'value': self._value_correct(self.blob['defaultValue']),
@@ -431,6 +503,8 @@ class JsonXml(Mappings, XmlTemplates):
                    'help': self.blob['summary'],
                    'section': self.section}
 
+        if self.is_req_output or self.is_output:
+            xml_out['label'] = self._assign_label(xml_out)
         # if self.in_frmt:
         #     xml_out['format'] = self.in_frmt
         # if self.param_format_map(self.blob['name']):
@@ -438,6 +512,14 @@ class JsonXml(Mappings, XmlTemplates):
         for key in ['argument', 'checked', 'falsevalue', 'format', 'help', 'label', 'max', 'min', 'name', 'optional', 'truevalue', 'type', 'value']:
             xml_out[key] = escape(xml_out[key], {'"': '&quot;', "'": '&apos;'})
         return xml_out
+
+    def _assign_label(self, format):
+        """
+        When we're working with an output, would like to add different infromation to the label field.
+        :return:
+        """
+        cht_tmpl = self.out_label_tmpl
+        return cht_tmpl.substitute(format)
 
     def _assign_min_max(self, val):
         """
@@ -475,6 +557,7 @@ class JsonXml(Mappings, XmlTemplates):
                 return self.gen_out_fmt[self.pname]
         elif self.is_input:
             if self.pname in self.tool_data[self.tool_name]['input_fmt']:
+                print(self.tool_data[self.tool_name])
                 return self.tool_data[self.tool_name]['input_fmt'][self.pname]
             elif self.pname in self.gen_in_fmt:
                 return self.gen_in_fmt[self.pname]
@@ -506,7 +589,7 @@ class JsonShell(object):
             self.json_file = json.load(myfile)
             self.shell_dict = self.build_shell_dict()
             for entry in self.json_file['arguments']:
-                self.my_xml = JsonXml(entry, self.shell_dict['short_name'])
+                self.my_xml = JsonXml(entry, self.shell_dict['short_name'], args)
                 if self.my_xml.chth:
                     self.tool_chth.append(self.my_xml.chth)
                 if self.my_xml.chth_pre:
@@ -604,6 +687,7 @@ class XmlEtrees(JsonShell):
         """
         #        etree.write(stdout, xml_declaration=True, encoding='UTF-8')
         JsonShell.__init__(self, args)
+        self.args = args
         tool = etree.Element('tool', id='gatk4_' + self.shell_dict['id'], name=self.shell_dict['name'],
                              version="@WRAPPER_VERSION@0", profile=self.profile)
         description = etree.SubElement(tool, 'description')
@@ -621,28 +705,43 @@ class XmlEtrees(JsonShell):
         for entry in self.my_xml.tool_data[self.shell_dict['short_name']]['pre_params']:
             etree.SubElement(self.inputs, 'expand', macro=entry)
         self.build_inputs(self.tool_xml, self.inputs, 'param')
-        self.opt_sect = etree.SubElement(self.inputs, 'section', name='optional', title='Optional Parameters', expanded='False')
+        if self.xml_opt or self.my_xml.tool_data[self.shell_dict['short_name']]['opt_params']:
+            self.opt_sect = etree.SubElement(self.inputs, 'section', name='optional', title='Optional Parameters', expanded='False')
+            self.build_inputs(self.xml_opt, self.opt_sect, 'param')
         for entry in self.my_xml.tool_data[self.shell_dict['short_name']]['opt_params']:
             etree.SubElement(self.opt_sect, 'expand', macro=entry)
-        self.build_inputs(self.xml_opt, self.opt_sect, 'param')
+#        self.build_inputs(self.xml_opt, self.opt_sect, 'param')
 
         if self.xml_adv or self.my_xml.tool_data[self.shell_dict['short_name']]['adv_params']:
+#            self.adv_sect, self.when_yes = self._section_write('advanced', 'Advanced Parameters', 'advanced_sel')
             self.adv_sect = etree.SubElement(self.inputs, 'section', name='advanced', title='Advanced Parameters', expanded='False')
             for entry in self.my_xml.tool_data[self.shell_dict['short_name']]['adv_params']:
                 etree.SubElement(self.adv_sect, 'expand', macro=entry)
+#            if not self.args.old_galaxy:
             self.build_inputs(self.xml_adv, self.adv_sect, 'param')
+            # else:
+            #     self.build_inputs(self.xml_adv, self.when_yes, 'param')
+
         for entry in self.my_xml.tool_data[self.shell_dict['short_name']]['post_params']:
             etree.SubElement(self.inputs, 'expand', macro=entry)
 
         # Temporary common section to work on macros.
-        self.comm_sect = etree.SubElement(self.inputs, 'section', name='common', title='Common Parameters', expanded='False')
-        self.build_inputs(self.xml_comm, self.comm_sect, 'param')
-
+        if self.xml_comm:
+#            self.comm_sect, self.when_yes = self._section_write('common', 'Common Parameters', 'common_sel')
+            self.comm_sect = etree.SubElement(self.inputs, 'section', name='common', title='Common Parameters', expanded='False')
+            self.build_inputs(self.xml_comm, self.comm_sect, 'param')
 
         # OUTPUT section
         if self.xml_out:
-            self.output_sect = etree.SubElement(self.inputs, 'section', name='output_opt', title='Additional Output Parameters', expanded='False')
-            self.build_inputs_out_sel(self.xml_out)
+#            self.output_sect, self.when_yes = self._section_write('output_opt', 'Additional Output Parameters', 'output_opt_sel')
+            if not self.args.old_galaxy:
+                self.output_sect = etree.SubElement(self.inputs, 'section', name='output_opt',
+                                                    title='Additional Output Parameters',
+                                                    expanded='False')
+                self.build_inputs_out_sel(self.xml_out, self.output_sect)
+            else:
+                self.build_inputs_out_sel(self.xml_out, self.inputs)
+
         self.outputs = etree.SubElement(tool, 'outputs')
         for entry in self.my_xml.tool_data[self.shell_dict['short_name']]['output_params']:
             etree.SubElement(self.outputs, 'expand', macro=entry)
@@ -657,7 +756,70 @@ class XmlEtrees(JsonShell):
 
         self.to_write = etree.tostring(tool, pretty_print=True, encoding="unicode")
 
-    def build_inputs_out_sel(self, params):
+    def _section_write(self, sname, stitle, selname):
+        """
+        Write a section, or write a conditional, depending on arg.
+        :return:
+        """
+        if not self.args.old_galaxy:
+            this_sect = etree.SubElement(self.inputs, 'section', name=sname, title=stitle, expanded='False')
+            when_yes = None
+        else:
+            this_sect = etree.SubElement(self.inputs, 'conditional', name=sname)
+            this_sect_sel = etree.SubElement(this_sect, 'param', name=selname, type='select',
+                                                    label=stitle)
+            opt_yes = etree.SubElement(this_sect_sel, 'option', value='yes')
+            opt_yes.text = 'yes'
+            opt_no = etree.SubElement(this_sect_sel, 'option', value='no', selected='true')
+            opt_no.text = 'no'
+            when_yes = etree.SubElement(this_sect, 'when', value='yes')
+        return this_sect, when_yes
+
+    def _output_section_write(self):
+        """
+        Write a section, or write a conditional, depending on arg.
+        :return:
+        """
+        if not self.args.old_galaxy:
+            self.output_sect = etree.SubElement(self.inputs, 'section', name='output_opt', title='Additional Output Parameters', expanded='False')
+        else:
+            self.output_sect = etree.SubElement(self.inputs, 'conditional', name='output_opt')
+            self.output_sect_sel = etree.SubElement(self.output_sect, 'param', name='output_opt_sel', type='select',
+                                                    label='Additional output parameters?')
+            self.opt_yes = etree.SubElement(self.output_sect_sel, 'option', value='yes')
+            self.opt_yes.text = 'yes'
+            self.opt_no = etree.SubElement(self.output_sect_sel, 'option', value='no', selected='true')
+            self.opt_no.text = 'no'
+            self.when_yes = etree.SubElement(self.output_sect, 'when', value='yes')
+
+    def _build_conditional(self):
+        """
+        Put the conditional together that acts as a section.
+    Example:
+    <conditional name="output_opt">
+      <param name="output_opt_sel" type="select" label="Additional output parameters?">
+        <option value="yes">yes</option>
+        <option value="no" selected="true">no</option>
+      </param>
+      <when value="yes">
+        <param argument="--graph_output_sel" checked="false" falsevalue="" help="Write debug assembly graph information to this\
+ file" label="Graph Output" name="graph_output_sel" optional="true" truevalue="--graph_output_sel" type="boolean"/>
+      </when>
+    </conditional>
+
+        :return:
+        """
+        # HERE
+        self.output_sect = etree.SubElement(self.inputs, 'conditional', name='output_opt')
+        self.output_sect_sel = etree.SubElement(self.output_sect, 'param', name='output_opt_sel', type='select', label='Additional output parameters?')
+        self.opt_yes = etree.SubElement(self.output_sect_sel, 'option', value='yes')
+        self.opt_yes.text = 'yes'
+        self.opt_no = etree.SubElement(self.output_sect_sel, 'option', value='no', selected='true')
+        self.opt_no.text = 'no'
+        self.when_yes = etree.SubElement(self.output_sect, 'when', value='yes')
+
+
+    def build_inputs_out_sel(self, params, parent):
         """
         Build extra options under the additional outputs section to provide booleans for choosing optional outputs.
         <param name="sites-only-vcf-output" argument="--sites-only-vcf-output" type="boolean" truevalue="--sites-only-vcf-output" falsevalue="" optional="true" checked="false" label="Sites Only Vcf Output" help="If true, don&amp;apos;t emit genotype fields when writing vcf file output."/>
@@ -665,8 +827,11 @@ class XmlEtrees(JsonShell):
         """
         for param in params:
             new_name = param['name'] + '_sel'
+            new_label = param['name'].replace('_', ' ').title()
             new_arg = '--' + new_name
-            this_param = etree.SubElement(self.output_sect, 'param', name=new_name, argument=new_arg, type='boolean', truevalue=new_arg, falsevalue='', optional='true', checked='false', label=param['label'], help=param['help'])
+            this_param = etree.SubElement(parent, 'param', name=new_name, argument=new_arg, type='boolean',
+                                          truevalue=new_arg, falsevalue='', optional='true', checked='false',
+                                          label=new_label, help=param['help'])
 
     def create_output_loc(self):
         """
@@ -711,8 +876,10 @@ class XmlEtrees(JsonShell):
             if filt_tag:
                 # <filter>not gzipped_output</filter>
                 filt = etree.SubElement(this_param, 'filter')
-                filt.text = 'output_opt[\'' + param['name'] + '_sel\']'
-
+                if not self.args.old_galaxy:
+                    filt.text = 'output_opt[\'' + param['name'] + '_sel\']'
+                else:
+                    filt.text = param['name'] + '_sel'
 
     def build_sel_opt(self, this_param, sel_blob):
         """
