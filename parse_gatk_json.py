@@ -621,7 +621,7 @@ class JsonShell(object):
         :return:
         """
         shell_dict = {'id': self.json_file['name'].lower().split(' ')[0],
-                      'name': Template('GATK4 $name').substitute(self.json_file),
+                      'name': Template('GATK4 AUTO $name').substitute(self.json_file),
                       'short_name': self.json_file['name'].split(' ')[0],
                       'profile': self.profile,
                       'description': self.json_file['summary'].rstrip(' '),
@@ -688,7 +688,7 @@ class XmlEtrees(JsonShell):
         #        etree.write(stdout, xml_declaration=True, encoding='UTF-8')
         JsonShell.__init__(self, args)
         self.args = args
-        tool = etree.Element('tool', id='gatk4_' + self.shell_dict['id'], name=self.shell_dict['name'],
+        tool = etree.Element('tool', id='gatk4_auto_' + self.shell_dict['id'], name=self.shell_dict['name'],
                              version="@WRAPPER_VERSION@0", profile=self.profile)
         description = etree.SubElement(tool, 'description')
         description.text = '- ' + self.shell_dict['description']
